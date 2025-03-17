@@ -1,7 +1,6 @@
 # MLOps_Project_AAAJ
 
-### PPT link
-
+### Project description slides (this will become the lightning presentation slides later):
 https://docs.google.com/presentation/d/1SLk_QY1X76YTCcAVxCmPJryoYQXWeyjpfkDJryqxZ94/edit?usp=sharing
 
 
