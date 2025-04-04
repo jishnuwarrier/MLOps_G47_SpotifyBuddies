@@ -57,7 +57,7 @@
 
 # Detailed design plan
 
-## **Model Training & Infrastructure (Agustin – Units 4 & 5)**
+## Model Training & Infrastructure (Agustin)
 
 ### Model 1: User Pairing Model
 
@@ -88,7 +88,7 @@
     - We will track experiments using ML Flow and we will track features such as fault tolerance, and checkpointing using Ray Train.
     - We will also schedule hyperparameter tuning jobs using Ray Tune.
 
-### Model serving and monitoring platforms (Anup)
+## Model serving and monitoring platforms (Anup)
 
 - **Model Serving**
     - **Serving from an API endpoint**
@@ -134,7 +134,7 @@
     - **Monitor for model degradation**
         - We will employ Prometheus service to check for the degradation of model’s performance. Our current idea is that if the user activity stops improving/increasing even after getting the model, then we can assume that the model’s performance has degraded. Then, we will trigger the automated machine training pipeline
 
-### Data pipeline
+## Data pipeline (Akhil)
 
 - Offline Data - Process data from the Million Playlist Dataset and the EchoNest Taste Profile dataset and store them in separate tables in a MongoDB database. The dataset is in JSON format, so storing in MongoDB is an appropriate choice.
 - Persistent Storage - Provision a persistent storage on Chameleon using MLFlow for storing model, model artifacts and test artifacts (part of model serving)
@@ -142,7 +142,7 @@
 - Online data - Will be simulated by us interacting with songs and/or by a script which mimics user behavior. We would interact with the songs in the playlist (and other songs in general) which would give us insight on new playlist recommendations for the user. The ETL pipeline (from above) will be used to process the users interaction with the songs and add them into would data repository. Model training would be done on this new data.
 - Interactive data dashboard(extra difficulty) - Interactive dashboard to get insights about the users interacting with the songs in the playlist, listening time on organic playlists opposed to other playlists, most popular recommended playlists(for new users) and other similar metrics.
 
-### Continuous X
+## Continuous X (Jishnu)
 
 - We will implement a fully automated CI/CD pipeline using Github Actions and integrate with the infrastructure hosted on ChameleonCloud
 - All the cloud native principles such as containerization, microservices, immutable infrastructure and version controlled automated deployments will be used.
