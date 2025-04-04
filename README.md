@@ -27,7 +27,7 @@
 
 ### System diagram
 
-![mlops-presentation.jpg](mlops-presentation.jpg)
+![mlops-presentation.jpg](./mlops-presentation.jpg)
 
 ### Summary of outside materials
 
