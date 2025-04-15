@@ -1,0 +1,54 @@
+name: spotify_buddies_etl
+
+volumes:
+  spotify_buddies_vol:
+
+services:
+  extract_entp_data:
+    container_name: etl_extract_entp_data
+    image: python:3.11
+    user: root
+    volumes:
+      - spotify_buddies_vol:/data
+    working_dir: /data
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+
+        echo "Resetting EchoNest Taste Profile dataset directory..."
+        rm -rf ENTP
+        mkdir -p ENTP
+        cd ENTP
+
+        echo "Downloading dataset zip..."
+        curl -L http://labrosa.ee.columbia.edu/~dpwe/tmp/train_triplets.txt.zip \
+          -o entp.zip
+
+        echo "Unzipping dataset..."
+        unzip -q entp.zip
+        rm -f entp.zip
+
+        echo "Listing contents of /data after extract stage:"
+        ls -l /data
+
+  load_entp_data:
+    container_name: etl_load_entp_data
+    image: rclone/rclone:latest
+    volumes:
+      - spotify_buddies_vol:/data
+      - ~/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        rclone copy /data/ENTP chi_tacc:object-persist-project47 \
+        --progress \
+        --transfers=32 \
+        --checkers=16 \
+        --multi-thread-streams=4 \
+        --fast-list
+
+        echo "Listing directories in container after load stage:"
+        rclone lsd chi_tacc:object-persist-project47
