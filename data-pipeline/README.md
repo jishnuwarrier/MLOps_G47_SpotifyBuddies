@@ -32,3 +32,10 @@ region = CHI@TACC
 ```
 rclone lsd chi_tacc:
 ```
+6. Mount the object store into local file system
+```
+sudo mkdir -p /mnt/object
+sudo chown -R cc /mnt/object
+sudo chgrp -R cc /mnt/object
+rclone mount chi_tacc:object-persist-project47 /mnt/object --read-only --allow-other --daemon
+```
