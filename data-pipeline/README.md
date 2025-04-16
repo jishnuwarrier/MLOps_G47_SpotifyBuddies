@@ -39,3 +39,7 @@ sudo chown -R cc /mnt/object
 sudo chgrp -R cc /mnt/object
 rclone mount chi_tacc:object-persist-project47 /mnt/object --read-only --allow-other --daemon
 ```
+7. Run this command to check if the data directories are available
+```
+ls /mnt/object
+```
