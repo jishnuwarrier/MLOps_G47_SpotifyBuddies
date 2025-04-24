@@ -4,6 +4,9 @@ import asyncio
 # Third-Party
 from fastapi import FastAPI
 
+# Prometheus
+from prometheus_fastapi_instrumentator import Instrumentator
+
 # Local Paths
 from config import settings
 from routers import routers
@@ -16,6 +19,11 @@ app = FastAPI(
 )
 
 app.include_router(routers)
+
+
+# Expose the App to prometheus
+if not settings.DEBUG:
+    Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/health")
