@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 # Local Paths
 from config import settings
+from routers import routers
 
 
 app = FastAPI(
@@ -13,6 +14,8 @@ app = FastAPI(
     description="This service to expose the API endpoint to interact with the model",
     version="1.0.0",
 )
+
+app.include_router(routers)
 
 
 @app.get("/health")
