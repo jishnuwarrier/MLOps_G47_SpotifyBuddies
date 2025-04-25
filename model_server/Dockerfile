@@ -3,6 +3,10 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
+# Install Utilities
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl
+
 # Disable Python downloads, because we want to use the system interpreter
 # across both images. If using a managed Python version, it needs to be
 # copied from the build image into the final image; see `standalone.Dockerfile`

@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class PlaylistRequestSchema(BaseModel):
-    user_id: str
+    user_id: int
 
 
 class PlaylistResponseSchema(BaseModel):
-    playlist_id: str
+    playlist_id: int
