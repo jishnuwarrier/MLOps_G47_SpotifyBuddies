@@ -1,8 +1,7 @@
-import asyncio
-
 from fastapi import APIRouter
 
 from schemas.playlist import PlaylistRequestSchema, PlaylistResponseSchema
+from ml_model.recommender import get_recommended_playlist
 
 prefix = r"/playlist"
 router = APIRouter(prefix=prefix, tags=["playlist"])
@@ -13,10 +12,5 @@ async def recommend_playlist(body: PlaylistRequestSchema) -> PlaylistResponseSch
     """
     Endpoint to get the recommended playlist for users
     """
-    print(body)
-
-    # TODO=> Call the ML Model inference here!!
-    await asyncio.sleep(1)
-
-    response_params = {"playlist_id": "123"}
+    response_params = {"playlist_id": get_recommended_playlist(body.user_id)}
     return PlaylistResponseSchema(**response_params)
