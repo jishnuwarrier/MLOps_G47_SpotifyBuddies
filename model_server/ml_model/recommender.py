@@ -1,7 +1,6 @@
-from .model import Recommender
+from .model import model
 
 
 # TODO => Improve it after the stable model is created
 def get_recommended_playlist(user_id: int) -> int:
-    recommender = Recommender()
-    return recommender.predict(user_id)
+    return model.predict(user_id)

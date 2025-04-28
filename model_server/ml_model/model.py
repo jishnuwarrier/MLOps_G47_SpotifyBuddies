@@ -1,7 +1,10 @@
+from dataclasses import dataclass
+
 import torch
 import torch.nn as nn
 
 from config import settings
+from utils import Singleton
 
 
 # TODO => Remove after stable model is created
@@ -14,16 +17,35 @@ class SimpleRecommender(nn.Module):
         return self.linear(x)
 
 
-class Recommender:
-    def __init__(self, model_path: str | None = None):
+@dataclass
+class Recommender(metaclass=Singleton):
+    model: nn.Module | None = None
+
+    # def __init__(self, model_path: str | None = None):
+    #     """
+    #     Initialize the model by loading the
+    #     trained model from specified path
+    #     """
+    #
+    #     # Load trained model
+    #     if settings.USE_MODEL:
+    #         self.model = torch.load(model_path)
+    #     else:
+    #         self.model = SimpleRecommender()
+    #         with torch.no_grad():
+    #             self.model.linear.weight.fill_(1.0)
+    #             self.model.linear.bias.fill_(1.0)
+    #
+    #     self.model.eval()
+
+    def load_model(self, path: str) -> None:
         """
         Initialize the model by loading the
         trained model from specified path
         """
-
         # Load trained model
         if settings.USE_MODEL:
-            self.model = torch.load(model_path)
+            self.model = torch.load(path)
         else:
             self.model = SimpleRecommender()
             with torch.no_grad():
@@ -50,3 +72,6 @@ class Recommender:
             recommendation = self.model(input).item()
 
         return recommendation
+
+
+model = Recommender()

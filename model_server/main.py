@@ -3,9 +3,8 @@ import asyncio
 
 # Third-Party
 from fastapi import FastAPI
-
-# Prometheus
 from prometheus_fastapi_instrumentator import Instrumentator
+
 
 # Local Paths
 from config import settings
@@ -23,8 +22,9 @@ app = FastAPI(
 app.include_router(routers)
 
 
-# Expose the App to prometheus
+# Expose the app to prometheus
 if not settings.DEBUG:
+    print("Connecting with prometheus")
     Instrumentator().instrument(app).expose(app)
 
 
