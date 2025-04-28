@@ -10,12 +10,14 @@ from prometheus_fastapi_instrumentator import Instrumentator
 # Local Paths
 from config import settings
 from routers import routers
+from lifespan import lifespan
 
 
 app = FastAPI(
     title="ML Model Inference Service",
     description="This service to expose the API endpoint to interact with the model",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.include_router(routers)
