@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from services.redis import redis_conn_pool, get_async_redis_session
-from config import settings
-from ml_model.model import model
+
+# from config import settings
+# from ml_model.model import model, pool
+from ml_model.model import intialize_model
 
 
 @asynccontextmanager
@@ -16,7 +18,8 @@ async def lifespan(app: FastAPI):
     await (await get_async_redis_session()).ping()
 
     # Load the ML model
-    model.load_model(settings.MODEL_PATH)
+    # model.load_model(settings.MODEL_PATH)
+    intialize_model()
 
     yield
 

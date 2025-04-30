@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
 
 import torch
 import torch.nn as nn
@@ -19,24 +20,8 @@ class SimpleRecommender(nn.Module):
 
 @dataclass
 class Recommender(metaclass=Singleton):
-    model: nn.Module | None = None
-
-    # def __init__(self, model_path: str | None = None):
-    #     """
-    #     Initialize the model by loading the
-    #     trained model from specified path
-    #     """
-    #
-    #     # Load trained model
-    #     if settings.USE_MODEL:
-    #         self.model = torch.load(model_path)
-    #     else:
-    #         self.model = SimpleRecommender()
-    #         with torch.no_grad():
-    #             self.model.linear.weight.fill_(1.0)
-    #             self.model.linear.bias.fill_(1.0)
-    #
-    #     self.model.eval()
+    _model: nn.Module | None = None
+    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def load_model(self, path: str) -> None:
         """
@@ -45,20 +30,24 @@ class Recommender(metaclass=Singleton):
         """
         # Load trained model
         if settings.USE_MODEL:
-            self.model = torch.load(path)
+            self._model = torch.jit.load(path, map_location=self.device)
         else:
-            self.model = SimpleRecommender()
+            self._model = SimpleRecommender()
             with torch.no_grad():
-                self.model.linear.weight.fill_(1.0)
-                self.model.linear.bias.fill_(1.0)
+                self._model.linear.weight.fill_(1.0)
+                self._model.linear.bias.fill_(1.0)
+            self._model = torch.jit.script(self._model)
 
-        self.model.eval()
+        self._model.eval()
+
+        # TorchScript Optimization
+        self._model = torch.jit.freeze(self._model)
 
     def preprocess(self, user_id: int) -> torch.Tensor:
         """
         Convert Input to pytorch tensor
         """
-        return torch.tensor([[user_id]], dtype=torch.float32)
+        return torch.tensor([[user_id]], dtype=torch.float32).to(self.device)
 
     def predict(self, user_id: int) -> int:
         """
@@ -68,10 +57,27 @@ class Recommender(metaclass=Singleton):
         # Preprocess the input
         input = self.preprocess(user_id)
 
-        with torch.no_grad():
-            recommendation = self.model(input).item()
+        with torch.inference_mode():
+            recommendation = self._model(input).cpu().item()
 
         return recommendation
 
 
+pool = None
+
+
+def intialize_model():
+    # global model
+    # model.load_model(settings.MODEL_PATH)
+    global pool
+    pool = ProcessPoolExecutor(
+        max_workers=1, initializer=Recommender().load_model(settings.MODEL_PATH)
+    )
+    print("Intialize Child Process for ML inference")
+
+
 model = Recommender()
+
+
+def make_prediction(user_id: int) -> int:
+    return model.predict(user_id)

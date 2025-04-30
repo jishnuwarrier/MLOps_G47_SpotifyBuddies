@@ -15,7 +15,7 @@ async def recommend_playlist(
     """
     Endpoint to get the recommended playlist for users
     """
-    playlist_id = get_recommended_playlist(body.user_id)
+    playlist_id = await get_recommended_playlist(body.user_id)
     response_params = {"playlist_id": playlist_id}
 
     # Updating the Redis Cache
