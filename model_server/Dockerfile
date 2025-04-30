@@ -39,4 +39,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 80
 
 # Run the FastAPI application by default
-CMD ["fastapi", "dev", "--host", "0.0.0.0", "--port", "80","/app/main.py"]
+# CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "80","/app/main.py"]
