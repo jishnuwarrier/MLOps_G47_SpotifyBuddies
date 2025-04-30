@@ -10,12 +10,20 @@ services:
       context: ../model_server/
       dockerfile: Dockerfile
     container_name: fastapi_server
+    command: "fastapi run --host 0.0.0.0 --port 80 /app/main.py"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     ports:
       - "8000:80"
     expose:
       - "8000"
     environment:
       - DEBUG=False
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - redis
 
