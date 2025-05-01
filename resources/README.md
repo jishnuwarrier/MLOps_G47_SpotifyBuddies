@@ -18,4 +18,4 @@ ssh -i ~/.ssh/id_rsa_chameleon cc@129.114.27.215
 
 ### Instances
 
-- [node1-cloud-project47 (m1.large)](https://kvm.tacc.chameleoncloud.org/project/instances/4a7bda9a-378f-413d-97e1-19a166aded72/)
+- [node1-cloud-project47 (m1.large)](https://kvm.tacc.chameleoncloud.org/project/instances/a118c54e-b500-403f-b4d1-46bad1b1a1a7/)
