@@ -1,3 +1,9 @@
+variable "suffix" {
+  description = "Suffix for resource names"
+  type        = string
+  default     = "project47"
+}
+
 variable "key" {
   description = "Name of key pair"
   type        = string
