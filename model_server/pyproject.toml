@@ -1,0 +1,14 @@
+[project]
+name = "model-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alibi-detect>=0.12.0",
+    "fastapi[all]>=0.115.12",
+    "locust>=2.36.2",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "redis>=5.2.1",
+    "torch>=2.7.0",
+]
