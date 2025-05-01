@@ -66,8 +66,3 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
   description = "MLOps IP for ${var.suffix}"
   port_id     = openstack_networking_port_v2.sharednet2_ports["node1"].id
 }
-
-resource "openstack_blockstorage_volume_v3" "data_volume" {
-  name = "data-vol-${var.suffix}"
-  size = var.volume_size 
-}
