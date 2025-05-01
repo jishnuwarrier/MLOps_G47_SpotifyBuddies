@@ -40,7 +40,7 @@ resource "openstack_networking_port_v2" "sharednet2_ports" {
 resource "openstack_compute_instance_v2" "nodes" {
   for_each = var.nodes
 
-  name        = "${each.key}-mlops-${var.suffix}"
+  name        = "${each.key}-devops-project47"
   image_name  = "CC-Ubuntu24.04"
   flavor_name = "m1.medium"
   key_pair    = var.key
