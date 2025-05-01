@@ -18,3 +18,9 @@ variable "nodes" {
     "node3" = "192.168.1.13"
   }
 }
+
+variable "volume_size" {
+  description = "Size of persistent volume in GB"
+  type        = number
+  default     = 100
+}
