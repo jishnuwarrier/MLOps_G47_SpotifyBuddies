@@ -38,6 +38,9 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    build:
+      context: ../model_monitoring/grafana/
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     depends_on:
