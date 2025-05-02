@@ -1,5 +1,6 @@
-import random
 import json
+
+import numpy as np
 
 from locust import HttpUser, task, between
 
@@ -9,5 +10,7 @@ class AppTest(HttpUser):
 
     @task
     def call_prediction(self):
-        data = random.randint(0, 2000)
-        self.client.post("api/playlist/recommend/", data=json.dumps({"user_id": data}))
+        data = np.random.randint(1, 10000, 50)
+        self.client.post(
+            "api/playlist/recommend/", data=json.dumps({"user_ids": data.tolist()})
+        )
