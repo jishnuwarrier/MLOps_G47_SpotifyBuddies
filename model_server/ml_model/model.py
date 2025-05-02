@@ -54,33 +54,37 @@ class Recommender(metaclass=Singleton):
         )
         # return torch.tensor([user_id], dtype=torch.float32).to(self.device)
 
-    def predict(self, user_id: list[int]) -> int:
+    def predict(self, user_ids: list[int]) -> dict[int, int]:
         """
         Make Prediction using the model with the input
         """
 
         # Preprocess the input
-        input = self.preprocess(user_id)
+        input = self.preprocess(user_ids)
 
         with torch.inference_mode():
             recommendations = self._model(input).reshape(-1).cpu().tolist()
             # recommendations = self._model(input).cpu().item()
 
-        return recommendations
+        # Create a dictionary of user_ids as key and playlist_id as value
+        results = {
+            user_id: playlist_id
+            for user_id, playlist_id in zip(user_ids, recommendations)
+        }
+
+        return results
 
 
 pool = None
+model = Recommender()
 
 
 def intialize_model():
     global pool
     pool = ProcessPoolExecutor(
-        max_workers=1, initializer=Recommender().load_model(settings.MODEL_PATH)
+        max_workers=1, initializer=model.load_model(settings.MODEL_PATH)
     )
     print("Intialize Child Process for ML inference")
-
-
-model = Recommender()
 
 
 def make_prediction(user_id: [int]) -> list[int]:
