@@ -70,15 +70,17 @@ services:
       --artifacts-destination s3://mlflow-artifacts/ --serve-artifacts --host 0.0.0.0 --port 8000"
 
   jupyter:
-    image: quay.io/jupyter/pytorch-notebook:pytorch-2.5.1
+    image: jupyter-mlflow
     container_name: jupyter
+    restart: unless-stopped
     ports:
       - "8888:8888"
-    shm_size: 8g
-    environment:
-      - MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/
-      - BLOCK_DATA_DIR=/mnt/block
-      - OBJECT_DATA_DIR=/mnt/object
+    shm_size: 16g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
     volumes:
       - ~/github/MLOps_G47_SpotifyBuddies:/home/jovyan/work/
       - type: bind
@@ -88,8 +90,32 @@ services:
       - type: bind
         source: /mnt/block
         target: /mnt/block
-    command: >
-      bash -c "python3 -m pip install mlflow && start-notebook.sh"
+    environment:
+      - MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/
+      - BLOCK_DATA_DIR=/mnt/block
+      - OBJECT_DATA_DIR=/mnt/object
+
+  # jupyter:
+  #   image: quay.io/jupyter/pytorch-notebook:pytorch-2.5.1
+  #   container_name: jupyter
+  #   ports:
+  #     - "8888:8888"
+  #   shm_size: 8g
+  #   environment:
+  #     - MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/
+  #     - BLOCK_DATA_DIR=/mnt/block
+  #     - OBJECT_DATA_DIR=/mnt/object
+  #   volumes:
+  #     - ~/github/MLOps_G47_SpotifyBuddies:/home/jovyan/work/
+  #     - type: bind
+  #       source: /mnt/object
+  #       target: /mnt/data
+  #       read_only: true
+  #     - type: bind
+  #       source: /mnt/block
+  #       target: /mnt/block
+  #   command: >
+  #     bash -c "python3 -m pip install mlflow && start-notebook.sh"
 
   prometheus:
       image: prom/prometheus
