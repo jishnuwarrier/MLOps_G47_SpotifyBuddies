@@ -19,3 +19,7 @@ ssh -i ~/.ssh/id_rsa_chameleon cc@129.114.27.215
 ### Instances
 
 - [node1-cloud-project47 (m1.large)](https://kvm.tacc.chameleoncloud.org/project/instances/a118c54e-b500-403f-b4d1-46bad1b1a1a7/)
+
+### Block storage
+
+- [block-persist-project47] (https://kvm.tacc.chameleoncloud.org/project/volumes/42b1865a-6ff9-44ed-9f8d-8ca639f4b97c/)
