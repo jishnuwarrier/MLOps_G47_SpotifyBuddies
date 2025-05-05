@@ -20,10 +20,10 @@
 | Name | Responsible for | Link to their commits in this repo |
 | --- | --- | --- |
 | All team members | Idea, value proposition, basic setup of ML problem |  |
-| Agustin Leon | Model training, experiment tracking (Units 4 & 5)  |  |
-| Akhil Manoj | Data pipeline (unit 8) |  |
-| Anup Raj Niroula | Model serving and monitoring (Units 6 & 7) |  |
-| Jishnu Warrier | Continuous pipeline (unit 3) |  |
+| Agustin Leon | Model training, experiment tracking (Units 4 & 5)  | [Link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/commits/main?author=AguLeon) |
+| Akhil Manoj | Data pipeline (unit 8) | [Link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/commits/main?author=AkM-2018)  |
+| Anup Raj Niroula | Model serving and monitoring (Units 6 & 7) | [Link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/commits/main?author=ARNiroula) |
+| Jishnu Warrier | Continuous pipeline (unit 3) | [Link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/commits/main?author=jishnuwarrier) |
 
 ### System diagram
 
