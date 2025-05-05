@@ -14,7 +14,8 @@ import mlflow
 import mlflow.pytorch
 
 # === 2. Config ===
-BASE_DIR = '/mnt/object'
+BASE_DIR = '/mnt/block'
+BASE_DIR_OBJ = '/mnt/data'
 DATASET_NAME = 'easy_toy'
 OUTPUT_DATASET_NAME = 'easy_toy'
 TRIPLET_DATA_PATH = BASE_DIR
@@ -45,7 +46,7 @@ use_amp = torch.cuda.is_available()
 
 
 # === 4. Load Triplets ===
-triplets = torch.load(os.path.join(BASE_DIR, TRIPLETS_DATASET_NAME))
+triplets = torch.load(os.path.join(BASE_DIR_OBJ, TRIPLETS_DATASET_NAME))
 NUM_USERS = triplets[:, 0].max().item() + 1
 NUM_PLAYLISTS = triplets[:, [1, 2]].max().item() + 1
 
