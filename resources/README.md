@@ -22,4 +22,4 @@ ssh -i ~/.ssh/id_rsa_chameleon cc@129.114.27.215
 
 ### Block storage
 
-- [block-persist-project47] (https://kvm.tacc.chameleoncloud.org/project/volumes/42b1865a-6ff9-44ed-9f8d-8ca639f4b97c/)
+- [block-persist-project47](https://kvm.tacc.chameleoncloud.org/project/volumes/42b1865a-6ff9-44ed-9f8d-8ca639f4b97c/)
