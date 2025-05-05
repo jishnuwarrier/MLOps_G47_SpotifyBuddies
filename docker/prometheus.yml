@@ -5,3 +5,9 @@ scrape_configs:
   - job_name: 'playlist_recommendation'
     static_configs:
       - targets: ['fastapi_server:80']
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "mlflow"
+    static_configs:
+      - targets: ["mlflow:8000"]

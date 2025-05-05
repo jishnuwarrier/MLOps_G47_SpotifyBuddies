@@ -1,9 +1,12 @@
+name: ml_server
 services:
   redis:
     image: "redis:alpine"
     container_name: redis
     ports:
       - 6379:6379
+    networks:
+      - production_net
 
   fastapi_server:
     build:
@@ -17,27 +20,38 @@ services:
       timeout: 3s
       retries: 3
     ports:
-      - "8000:80"
+      - "5000:80"
     expose:
-      - "8000"
+      - "5000"
     environment:
       - DEBUG=False
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
       - redis
+    networks:
+      - production_net
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    restart: always
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - /mnt/block/prometheus_data:/prometheus
+    # command:
+      # - --config.file=/etc/prometheus/prometheus.yaml
+      # - --storage.tsdb.path=/prometheus
+      # - --web.enable-lifecycle
+    networks:
+      - production_net
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    restart: always
     build:
       context: ../model_monitoring/grafana/
       dockerfile: Dockerfile
@@ -45,6 +59,13 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - /mnt/block/grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    command:
+      - "--homepath=/usr/share/grafana"
+      - "--config=/etc/grafana/grafana.ini"
+    networks:
+      - production_net
