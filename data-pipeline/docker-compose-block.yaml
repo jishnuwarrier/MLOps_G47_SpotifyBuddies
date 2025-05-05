@@ -77,17 +77,17 @@ services:
     shm_size: 8g
     environment:
       - MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/
-      - ENTP_DATA_DIR=/mnt/ENTP
+      - BLOCK_DATA_DIR=/mnt/block
+      - OBJECT_DATA_DIR=/mnt/object
     volumes:
-      - ~/data-persist-chi/workspace:/home/jovyan/work/  # change "~/data-persist-chi/workspace" to the jupyter you want
+      - ~/github/MLOps_G47_SpotifyBuddies:/home/jovyan/work/
       - type: bind
         source: /mnt/object
-        target: /mnt/ENTP
+        target: /mnt/data
         read_only: true
       - type: bind
-        source: /mnt/object
-        target: /mnt/ENTP
-        read_only: true
+        source: /mnt/block
+        target: /mnt/block
     command: >
       bash -c "python3 -m pip install mlflow && start-notebook.sh"
 
