@@ -23,8 +23,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "aekiz2ye2ae4ge"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -78,8 +77,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "aekiz2ye2ae4ge"
+            "type": "prometheus"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_requests_total{handler=\"/api/playlist/recommend/\", status != \"5xx\"}[15m])) / sum(rate(http_requests_total{handler=\"/api/playlist/recommend/\"}[15m]))",
@@ -95,8 +93,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "aekiz2ye2ae4ge"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -176,8 +173,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "eekipwxu6y8zke"
+            "type": "prometheus"
           },
           "editorMode": "code",
           "expr": "1000 * rate(http_request_duration_seconds_sum{handler=\"/api/playlist/recommend/\", job=\"playlist_recommendation\"}[1m]) / \r\nrate(http_request_duration_seconds_count{handler=\"/api/playlist/recommend/\", job=\"playlist_recommendation\"}[1m])",
@@ -191,8 +187,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "aekiz2ye2ae4ge"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -279,8 +274,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "eekipwxu6y8zke"
+            "type": "prometheus"
           },
           "editorMode": "code",
           "expr": "1000*histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{handler=\"/api/playlist/recommend/\"}[1m]))",
@@ -292,8 +286,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "eekipwxu6y8zke"
+            "type": "prometheus"
           },
           "editorMode": "code",
           "expr": "1000*histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{handler=\"/api/playlist/recommend/\"}[1m]))",
@@ -309,8 +302,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "aekiz2ye2ae4ge"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -397,8 +389,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "eekipwxu6y8zke"
+            "type": "prometheus"
           },
           "editorMode": "code",
           "expr": "rate(http_requests_total{handler=\"/api/playlist/recommend/\", status=\"5xx\"}[1m])",
@@ -414,8 +405,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "aekiz2ye2ae4ge"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {

@@ -1,28 +1,38 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 
 from schemas.playlist import PlaylistRequestSchema, PlaylistResponseSchema
 from ml_model.recommender import get_recommended_playlist
-from services.prometheus import INFERENCE_COUNT, REDIS_TO_TIME, INFERENCE_COUNTER_OUPUT
+from services.prometheus import INFERENCE_COUNT, INFERENCE_DIVERSITY
 from dependencies import REDIS_CONN
 
 prefix = r"/playlist"
 router = APIRouter(prefix=prefix, tags=["playlist"])
 
 
+def update_prometheus(predictions: dict[int, int]):
+    for prediction in predictions.values():
+        INFERENCE_DIVERSITY.labels(model="playlist_recommender").set(prediction)
+
+
 @router.post("/recommend/")
 async def recommend_playlist(
-    body: PlaylistRequestSchema, cache: REDIS_CONN
-) -> PlaylistResponseSchema:
+    body: PlaylistRequestSchema,
+    cache: REDIS_CONN,
+    background_task: BackgroundTasks,
+) -> list[PlaylistResponseSchema]:
     """
     Endpoint to get the recommended playlist for users
     """
-    playlist_id = await get_recommended_playlist(body.user_id)
-    INFERENCE_COUNT.inc()
-    INFERENCE_COUNTER_OUPUT.labels(output_label=str(playlist_id)).inc()
-    response_params = {"playlist_id": playlist_id}
+    predictions = await get_recommended_playlist(body.user_ids)
+    # # Updating the Redis Cache
+    await cache.hset(name="playlist", mapping=predictions)
+    # Update Prometheus from BackgroundTasks
+    background_task.add_task(update_prometheus, predictions)
 
-    # Updating the Redis Cache
-    with REDIS_TO_TIME.time():
-        await cache.set(body.user_id, playlist_id)
+    INFERENCE_COUNT.inc(amount=len(predictions))
 
-    return PlaylistResponseSchema(**response_params)
+    return [
+        PlaylistResponseSchema(user_id=user_id, playlist_id=playlist_id)
+        for user_id, playlist_id in predictions.items()
+    ]
+    # return PlaylistResponseSchema(**response_params)

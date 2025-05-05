@@ -43,41 +43,49 @@ class Recommender(metaclass=Singleton):
         # TorchScript Optimization
         self._model = torch.jit.freeze(self._model)
 
-    def preprocess(self, user_id: int) -> torch.Tensor:
+    def preprocess(self, user_ids: list[int]) -> torch.Tensor:
         """
         Convert Input to pytorch tensor
         """
-        return torch.tensor([[user_id]], dtype=torch.float32).to(self.device)
+        return (
+            torch.tensor(user_ids, dtype=torch.float32)
+            .reshape(len(user_ids), 1)
+            .to(self.device)
+        )
+        # return torch.tensor([user_id], dtype=torch.float32).to(self.device)
 
-    def predict(self, user_id: int) -> int:
+    def predict(self, user_ids: list[int]) -> dict[int, int]:
         """
         Make Prediction using the model with the input
         """
 
         # Preprocess the input
-        input = self.preprocess(user_id)
+        input = self.preprocess(user_ids)
 
         with torch.inference_mode():
-            recommendation = self._model(input).cpu().item()
+            recommendations = self._model(input).reshape(-1).cpu().tolist()
+            # recommendations = self._model(input).cpu().item()
 
-        return recommendation
+        # Create a dictionary of user_ids as key and playlist_id as value
+        results = {
+            user_id: playlist_id
+            for user_id, playlist_id in zip(user_ids, recommendations)
+        }
+
+        return results
 
 
 pool = None
+model = Recommender()
 
 
 def intialize_model():
-    # global model
-    # model.load_model(settings.MODEL_PATH)
     global pool
     pool = ProcessPoolExecutor(
-        max_workers=1, initializer=Recommender().load_model(settings.MODEL_PATH)
+        max_workers=1, initializer=model.load_model(settings.MODEL_PATH)
     )
     print("Intialize Child Process for ML inference")
 
 
-model = Recommender()
-
-
-def make_prediction(user_id: int) -> int:
+def make_prediction(user_id: [int]) -> list[int]:
     return model.predict(user_id)
