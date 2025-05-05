@@ -1,7 +1,7 @@
 variable "suffix" {
-  description = "Suffix for resource names"
+  description = "Suffix for resource names (use net ID)"
   type        = string
-  default     = "project47"
+  nullable = false
 }
 
 variable "key" {
