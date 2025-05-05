@@ -13,20 +13,24 @@ import polars as pl
 import mlflow
 import mlflow.pytorch
 
+print("1/5: Starting job")
+
 # === 2. Config ===
 BASE_DIR = '/mnt/block'
 BASE_DIR_OBJ = '/mnt/data'
 DATASET_NAME = 'easy_toy'
 OUTPUT_DATASET_NAME = 'easy_toy'
 TRIPLET_DATA_PATH = BASE_DIR
-METADATA_DIR = BASE_DIR
-CHECKPOINT_DIR = os.path.join(BASE_DIR, f'training_output/{OUTPUT_DATASET_NAME}/checkpoints')
-TENSORBOARD_DIR = os.path.join(BASE_DIR, f'training_output/{OUTPUT_DATASET_NAME}/tensorboard')
-os.makedirs(TENSORBOARD_DIR, exist_ok=True)
-os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+METADATA_DIR = BASE_DIR_OBJ
+# CHECKPOINT_DIR = os.path.join(BASE_DIR, f'training_output/{OUTPUT_DATASET_NAME}/checkpoints')
+# TENSORBOARD_DIR = os.path.join(BASE_DIR, f'training_output/{OUTPUT_DATASET_NAME}/tensorboard')
+# os.makedirs(TENSORBOARD_DIR, exist_ok=True)
+# os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 TRIPLETS_DATASET_NAME = 'all_triplets.pt'
 VAL_POSITIVES_NAME = 'val_positives.pkl'
+
+
 
 EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
@@ -35,7 +39,7 @@ LEARNING_RATE = 0.005
 EPOCHS = 5
 EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
-CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'last_checkpoint.pt')
+# CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'last_checkpoint.pt')
 
 SEED = 42
 torch.manual_seed(SEED)
@@ -46,7 +50,9 @@ use_amp = torch.cuda.is_available()
 
 
 # === 4. Load Triplets ===
+print("2/5: Loading dataset...")
 triplets = torch.load(os.path.join(BASE_DIR_OBJ, TRIPLETS_DATASET_NAME))
+print("3/5: Dataset loaded.")
 NUM_USERS = triplets[:, 0].max().item() + 1
 NUM_PLAYLISTS = triplets[:, [1, 2]].max().item() + 1
 
@@ -132,22 +138,22 @@ def evaluate_full_ranking(model, val_positives, k_list=[1, 5, 10]):
 model = BPRModel(NUM_USERS, NUM_PLAYLISTS, EMBEDDING_DIM).to(device)
 optimizer = torch.optim.SparseAdam(model.parameters(), lr=LEARNING_RATE)
 scaler = GradScaler(enabled=use_amp)
-writer = SummaryWriter(log_dir=TENSORBOARD_DIR)
+# writer = SummaryWriter(log_dir=TENSORBOARD_DIR)
 
 start_epoch = 1
 BEST_VAL_MRR = -1
 patience_counter = 0
 
-if RESUME_FROM_CHECKPOINT and os.path.exists(CHECKPOINT_PATH):
-    print(f"🔁 Resuming from checkpoint: {CHECKPOINT_PATH}")
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    BEST_VAL_MRR = checkpoint['best_val_mrr']
-    start_epoch = checkpoint['epoch'] + 1
-    print(f"✅ Resumed at epoch {start_epoch} with BEST_VAL_MRR = {BEST_VAL_MRR:.4f}")
-else:
-    print("🆕 Starting fresh training run.")
+# if RESUME_FROM_CHECKPOINT and os.path.exists(CHECKPOINT_PATH):
+#     print(f"🔁 Resuming from checkpoint: {CHECKPOINT_PATH}")
+#     checkpoint = torch.load(CHECKPOINT_PATH, map_location=device)
+#     model.load_state_dict(checkpoint['model_state_dict'])
+#     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+#     BEST_VAL_MRR = checkpoint['best_val_mrr']
+#     start_epoch = checkpoint['epoch'] + 1
+#     print(f"✅ Resumed at epoch {start_epoch} with BEST_VAL_MRR = {BEST_VAL_MRR:.4f}")
+# else:
+print("Starting fresh training run.")
 
 # === 10. MLFlow Start + Log Params ===
 mlflow.set_experiment(f"SpotifyBuddies_experiment1")
@@ -200,10 +206,10 @@ for epoch in range(start_epoch, EPOCHS + 1):
 
     print(f"📊 Epoch {epoch} | Loss: {avg_train_loss:.4f} | Val MRR: {val_mrr:.4f} | Hit@10: {val_hit_rates[10]:.4f}")
 
-    writer.add_scalar('Loss/train', avg_train_loss, epoch)
-    writer.add_scalar('Val/MRR', val_mrr, epoch)
-    for k in val_hit_rates:
-        writer.add_scalar(f'Val/Hit@{k}', val_hit_rates[k], epoch)
+    # writer.add_scalar('Loss/train', avg_train_loss, epoch)
+    # writer.add_scalar('Val/MRR', val_mrr, epoch)
+    # for k in val_hit_rates:
+    #     writer.add_scalar(f'Val/Hit@{k}', val_hit_rates[k], epoch)
 
     mlflow.log_metrics({
         "train_loss": avg_train_loss,
@@ -222,8 +228,8 @@ for epoch in range(start_epoch, EPOCHS + 1):
     if val_mrr > BEST_VAL_MRR:
         BEST_VAL_MRR = val_mrr
         patience_counter = 0
-        torch.save(checkpoint_data, os.path.join(CHECKPOINT_DIR, f'checkpoint_epoch_{epoch}_mrr_{val_mrr:.4f}.pt'))
-        torch.save(checkpoint_data, CHECKPOINT_PATH)
+        # torch.save(checkpoint_data, os.path.join(CHECKPOINT_DIR, f'checkpoint_epoch_{epoch}_mrr_{val_mrr:.4f}.pt'))
+        # torch.save(checkpoint_data, CHECKPOINT_PATH)
         mlflow.pytorch.log_model(model, artifact_path="bpr_model")
     else:
         patience_counter += 1
@@ -233,6 +239,6 @@ for epoch in range(start_epoch, EPOCHS + 1):
             break
 
 # === 12. Cleanup ===
-writer.close()
+# writer.close()
 mlflow.end_run()
 print("✅ Training complete.")
