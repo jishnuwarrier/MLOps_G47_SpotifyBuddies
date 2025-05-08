@@ -1,4 +1,4 @@
-[submodule "continuous_x_pipeline/ansible/kubespray"]
-	path = continuous_x_pipeline/ansible/kubespray
+[submodule "continuous_x_pipeline/ansible/k8s/kubespray"]
+	path = continuous_x_pipeline/ansible/k8s/kubespray
 	url = https://github.com/kubernetes-sigs/kubespray.git
 	branch = release-2.26
