@@ -87,3 +87,17 @@ sudo chmod -R 777 /mnt/block/prometheus_data
 sudo mkdir -p /mnt/block/grafana_data
 sudo chown -R 472:472 /mnt/block/grafana_data
 ```
+
+**Important commands**
+```
+# copy from instance to object store
+rclone copy /data/Food-11 chi_tacc:object-persist-project47 \
+        --progress \
+        --transfers=32 \
+        --checkers=16 \
+        --multi-thread-streams=4 \
+        --fast-list
+
+# top 20 dirs taking up space
+du -h --max-depth=1 ~ | sort -hr | head -n 20
+```
