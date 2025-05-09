@@ -4,10 +4,19 @@
   become: yes
   vars:
     argocd_username: "admin"
-    repo_path: "https://github.com/teaching-on-testbeds/gourmetgram-iac.git"
-    app_name: "gourmetgram-platform"
+    repo_path: "https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git"
+    app_name: "spotifybuddies-platform"
     app_path: "k8s/platform"
     minio_access_key: "your-access-key"
+
+    prom_app: "spotifybuddies-prometheus"
+    prom_path: "k8s/monitoring/prometheus"
+    graf_app: "spotifybuddies-grafana"
+    graf_path: "k8s/monitoring/grafana"
+
+    external_port_prom: "9090"
+    external_port_graf: "3000"
+    grafana_admin_pw: "grafana-admin"
 
   tasks:
     - name: Get ArgoCD admin password from Kubernetes secret
@@ -37,18 +46,18 @@
       set_fact:
         external_ip: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.56\\..*') | list | first }}"
 
-    - name: Ensure gourmetgram-platform namespace exists
-      command: kubectl get namespace gourmetgram-platform
+    - name: Ensure spotifybuddies-platform namespace exists
+      command: kubectl get namespace spotifybuddies-platform
       register: ns_check
       failed_when: false
       changed_when: false
 
-    - name: Create gourmetgram-platform namespace if missing
+    - name: Create spotifybuddies-platform namespace if missing
       when: ns_check.rc != 0
-      command: kubectl create namespace gourmetgram-platform
+      command: kubectl create namespace spotifybuddies-platform
 
     - name: Check if MinIO secret already exists
-      command: kubectl get secret minio-credentials -n gourmetgram-platform
+      command: kubectl get secret minio-credentials -n spotifybuddies-platform
       register: minio_secret_check
       failed_when: false
       changed_when: false
@@ -62,7 +71,7 @@
       when: minio_secret_check.rc != 0
       command: >
         kubectl create secret generic minio-credentials
-        --namespace gourmetgram-platform
+        --namespace spotifybuddies-platform
         --from-literal=accesskey={{ minio_access_key }}
         --from-literal=secretkey={{ minio_secret_key }}
       register: minio_secret_create
@@ -70,7 +79,7 @@
     - name: Get existing MinIO secret key if already exists
       when: minio_secret_check.rc == 0
       command: >
-        kubectl get secret minio-credentials -n gourmetgram-platform -o jsonpath="{.data.secretkey}"
+        kubectl get secret minio-credentials -n spotifybuddies-platform -o jsonpath="{.data.secretkey}"
       register: existing_secret_b64
 
     - name: Decode existing MinIO secret key
@@ -114,3 +123,67 @@
         msg: |
           MinIO Access Key: {{ minio_access_key }}
           MinIO Secret Key: {{ minio_secret_key }}
+
+    - name: Ensure spotifybuddies-monitoring namespace exists
+      command: kubectl get namespace spotifybuddies-monitoring
+      register: mon_ns_check
+      failed_when: false
+      changed_when: false
+
+    - name: Create namespace if missing
+      when: mon_ns_check.rc != 0
+      command: kubectl create namespace spotifybuddies-monitoring
+
+    - name: Check Prometheus app
+      command: argocd app get {{ prom_app }} --port-forward --port-forward-namespace=argocd
+      register: prom_check
+      failed_when: false
+      changed_when: false
+
+    - name: Create Prometheus app (if missing)
+      when: prom_check.rc != 0
+      command: >
+        argocd app create {{ prom_app }} \
+          --repo {{ repo_path }} \
+          --path {{ prom_path }} \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace spotifybuddies-monitoring \
+          --helm-set-string server.service.type=NodePort \
+          --helm-set-string server.service.nodePort={{ prom_nodeport }} \
+          --port-forward --port-forward-namespace=argocd \
+          --sync-policy automated --self-heal
+
+    - name: Update Prometheus app (if present)
+      when: prom_check.rc == 0
+      command: >
+        argocd app set {{ prom_app }} \
+          --helm-set-string server.service.nodePort={{ prom_nodeport }} \
+          --port-forward --port-forward-namespace=argocd
+
+    - name: Check Grafana app
+      command: argocd app get {{ graf_app }} --port-forward --port-forward-namespace=argocd
+      register: graf_check
+      failed_when: false
+      changed_when: false
+
+    - name: Create Grafana app (if missing)
+      when: graf_check.rc != 0
+      command: >
+        argocd app create {{ graf_app }} \
+          --repo {{ repo_path }} \
+          --path {{ graf_path }} \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace spotifybuddies-monitoring \
+          --helm-set-string service.type=NodePort \
+          --helm-set-string service.nodePort={{ graf_nodeport }} \
+          --helm-set-string adminPassword={{ grafana_admin_pw }} \
+          --port-forward --port-forward-namespace=argocd \
+          --sync-policy automated --self-heal
+
+    - name: Update Grafana app (if present)
+      when: graf_check.rc == 0
+      command: >
+        argocd app set {{ graf_app }} \
+          --helm-set-string service.nodePort={{ graf_nodeport }} \
+          --helm-set-string adminPassword={{ grafana_admin_pw }} \
+          --port-forward --port-forward-namespace=argocd
