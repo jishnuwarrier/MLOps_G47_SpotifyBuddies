@@ -26,9 +26,11 @@ docker run  -d --rm  -p 8888:8888 \
 ```
 
 ### 6. Set the environment:
+```
 python3 -m venv venv \
 source venv/bin/activate \
-pip install -r requirements.txt \
+pip install -r requirements.txt
+```
 
 ### On kvm:tacc instance
 1. The kvm:tacc instance should have the block storage mounted (this is done from the UI. already done for our instance)
