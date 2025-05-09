@@ -1,7 +1,24 @@
 # === 1. GENERAL PARAMETERS ===
 SEED = 42
-USE_RAY_TUNE = True
+USE_RAY_TUNE = False
 USE_MLFLOW = True
+
+
+# === 2. IMPORT DEPENDENCIES ===
+import os
+import json
+import torch
+from torch import nn
+from torch.utils.data import Dataset, DataLoader
+from torch.cuda.amp import autocast, GradScaler
+import numpy as np
+import random
+import pickle
+from tqdm import tqdm
+import mlflow
+import mlflow.pytorch
+import re
+from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 RUN_ON_CHAMELEON = True
@@ -47,7 +64,7 @@ EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
 # === 5. MLFLOW PARAMETERS ===
-MLFLOW_EXPERIMENT_NAME = 'SB_experiment2_fullDataset'
+MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment1'
 MLFLOW_TAGS = {
     "platform": "chameleon_cloud",
     "mode": "toy",
@@ -164,7 +181,7 @@ def evaluate_ranking(model, base_dir, slice_id=None, k_list=[1, 5, 10]):
             total_samples += 1
 
     if total_samples == 0:
-        print("⚠️ Warning: No validation samples found.")
+        print("Warning: No validation samples found.")
         return {k: 0.0 for k in k_list}, 0.0
 
     hit_rates = {k: hit_counts[k] / total_samples for k in k_list}
@@ -308,13 +325,21 @@ default_config = {
 }
 
 if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
+    from ray import tune
+
+    train_with_resources = tune.with_resources(
+        train_fn,
+        resources={"cpu": 4, "gpu": 1}  # Adjust this to match your per-trial needs
+    )
+
     tune.run(
         train_fn,
         config=RAY_SEARCH_SPACE,
         metric="val_mrr",
         mode="max",
         num_samples=RAY_NUM_SAMPLES,
-        name="bpr_hpo"
+        name="bpr_hpo",
+        resources_per_trial={"cpu": 4, "gpu": 0.5}
     )
 else:
     train_fn(default_config)
