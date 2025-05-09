@@ -8,11 +8,16 @@
 1. Once your lease begins, follow gpu_init.ipynb file on Chameleon to get a GPU instance
 2. Make sure it can access object store (follow data-pipeline/README)
 3. Run the jupyter-mlflow image command. Make sure MLFLOW_TRACKING_URI is the ip of kvm:tacc instance
+4. Clone the repo
+```
+git clone https://github.com/AguLeon/MLOps_G47_SpotifyBuddies
+```
+5. 
 ```
 docker run  -d --rm  -p 8888:8888 \
     --gpus all \
     --shm-size 16G \
-    -v ~/github/MLOps_G47_SpotifyBuddies:/home/jovyan/work/ \
+    -v ~/MLOps_G47_SpotifyBuddies:/home/jovyan/work/ \
     --mount type=bind,source=/mnt/object,target=/mnt/data,readonly \
     -e MLFLOW_TRACKING_URI=http://129.114.27.215:8000/ \
     -e OBJECT_DATA_DIR=/mnt/object \
