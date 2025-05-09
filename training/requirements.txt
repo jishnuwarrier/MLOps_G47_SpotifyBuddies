@@ -5,4 +5,4 @@ numpy
 tqdm
 polars
 mlflow
-ray[tune]
+ray[tune, train]

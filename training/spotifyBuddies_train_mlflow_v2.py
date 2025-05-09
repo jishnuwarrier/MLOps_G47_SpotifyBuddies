@@ -18,7 +18,7 @@ from tqdm import tqdm
 import mlflow
 import mlflow.pytorch
 import re
-from ray import tune
+# from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 RUN_ON_CHAMELEON = True
@@ -64,7 +64,7 @@ EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
 # === 5. MLFLOW PARAMETERS ===
-MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment1'
+MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment2_toy'
 MLFLOW_TAGS = {
     "platform": "chameleon_cloud",
     "mode": "toy",
@@ -215,7 +215,6 @@ def train_fn(config):
     patience_counter = 0
 
     if USE_MLFLOW:
-        mlflow.set_tracking_uri("http://<SERVER_B_PUBLIC_IP>:5000")
         mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
         mlflow.start_run()
         mlflow.log_params(config)
