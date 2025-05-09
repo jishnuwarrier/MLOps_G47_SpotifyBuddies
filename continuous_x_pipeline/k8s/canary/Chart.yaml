@@ -1,0 +1,5 @@
+apiVersion: v2
+name: spotifybuddies-canary
+version: 1.0.0
+description: SpotifyBuddies Canary Deployment
+

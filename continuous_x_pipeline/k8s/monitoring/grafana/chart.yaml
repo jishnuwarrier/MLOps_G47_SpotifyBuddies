@@ -1,0 +1,9 @@
+apiVersion: v2
+name: spotifybuddies‑grafana
+version: 0.1.0
+description: Grafana dashboards for Spotify Buddies
+
+dependencies:
+  - name: grafana
+    version: "6.59.4"
+    repository: "https://grafana.github.io/helm-charts"

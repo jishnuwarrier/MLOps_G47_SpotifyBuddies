@@ -1,0 +1,5 @@
+apiVersion: v2
+name: spotifybuddies-staging
+version: 1.0.0
+description: SpotifyBuddies Staging Deployment
+

@@ -1,0 +1,8 @@
+server:
+  service:
+    type: NodePort
+    nodePort: 9090
+
+alertmanager:
+  service:
+    type: ClusterIP

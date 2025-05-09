@@ -1,0 +1,9 @@
+service:
+  type: NodePort
+  nodePort: 3000
+
+adminPassword: "grafana-admin"
+
+persistence:
+  enabled: true
+  size: 10Gi

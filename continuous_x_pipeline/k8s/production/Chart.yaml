@@ -1,0 +1,5 @@
+apiVersion: v2
+name: spotifybuddies-production
+version: 1.0.0
+description: SpotifyBuddies Production Deployment
+
