@@ -63,7 +63,7 @@ EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
 GRAD_ACCUM_STEPS = 2
 LEARNING_RATE = 0.005
-EPOCHS = 5
+EPOCHS = 2
 EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
@@ -221,6 +221,7 @@ def train_fn(config):
     patience_counter = 0
 
     if USE_MLFLOW:
+        mlflow.set_tracking_uri("http://129.114.27.215:8000")
         mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
         mlflow.start_run()
         mlflow.log_params(config)
