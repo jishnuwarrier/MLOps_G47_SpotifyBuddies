@@ -2,7 +2,8 @@
 SEED = 42
 USE_RAY_TUNE = False
 USE_MLFLOW = True
-
+RUN_ON_CHAMELEON = True
+TRAIN_FULL_DATASET = False   # Select False for training on a toy dataset for testing and quick debugging
 
 # === 2. IMPORT DEPENDENCIES ===
 import os
@@ -21,15 +22,14 @@ import re
 # from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
-RUN_ON_CHAMELEON = True
-TRAIN_FULL_DATASET = True   # Select False for training on a toy dataset for testing and quick debugging
+
 
 TRAIN_TOY_DATASET = not TRAIN_FULL_DATASET
 TRIPLETS_DATASET_FILENAME = "training_triplets_toy.pt" if TRAIN_TOY_DATASET else "training_triplets_full.pt"
 TRIPLETS_DATASET_NAME = "training_triplets_toy" if TRAIN_TOY_DATASET else "training_triplets_full"
 
 if RUN_ON_CHAMELEON:
-    BASE_DIR = '/mnt/data'
+    BASE_DIR = '/mnt/object'
     LOCAL_BASE_DIR = '.'
     OUTPUT_DIR = os.path.join(LOCAL_BASE_DIR, f'training_output/{TRIPLETS_DATASET_NAME}')
     os.makedirs(OUTPUT_DIR, exist_ok=True)
