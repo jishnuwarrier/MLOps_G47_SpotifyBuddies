@@ -259,7 +259,7 @@ def train_fn(config):
             mlflow.log_metrics({
                 "train_loss": avg_train_loss,
                 "val_mrr": val_mrr,
-                **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}
+                **{f"hit-{k}": val_hit_rates[k] for k in val_hit_rates}
             }, step=epoch)
 
         if RAY_TUNE_AVAILABLE and USE_RAY_TUNE:
