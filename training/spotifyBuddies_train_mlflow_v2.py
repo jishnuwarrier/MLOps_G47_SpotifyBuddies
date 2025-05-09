@@ -1,3 +1,5 @@
+print("Starting training job! Let's go")
+
 # === 1. GENERAL PARAMETERS ===
 SEED = 42
 USE_RAY_TUNE = False
@@ -22,7 +24,7 @@ import re
 # from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
-
+print("-Imports done. Setting directories now.")
 
 TRAIN_TOY_DATASET = not TRAIN_FULL_DATASET
 TRIPLETS_DATASET_FILENAME = "training_triplets_toy.pt" if TRAIN_TOY_DATASET else "training_triplets_full.pt"
@@ -54,7 +56,9 @@ MODEL_CONFIG_PATH = os.path.join(CHECKPOINT_DIR, 'model_config.json')
 FINAL_MODEL_PATH = os.path.join(CHECKPOINT_DIR, 'final_model.pt')
 FINAL_FULL_CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'final_full_checkpoint.pt')
 
+
 # === 4. TRAINING PARAMETERS ===
+print("-Directories done. Setting parameters.")
 EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
 GRAD_ACCUM_STEPS = 2
@@ -89,6 +93,7 @@ RAY_SEARCH_SPACE = {
 
 
 # === 7. LOAD DATASET ===
+print("-Loading data.")
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
@@ -113,6 +118,7 @@ class BPRTripletDataset(Dataset):
 
 
 # === 8. MODEL ===
+print("-Creating model.")
 class BPRModel(nn.Module):
     def __init__(self, num_users, num_playlists, embedding_dim):
         super().__init__()
@@ -316,6 +322,7 @@ def train_fn(config):
 
 
 # === 11. MAIN EXECUTION ===
+print("-And starting to train!")
 default_config = {
     "embedding_dim": EMBEDDING_DIM,
     "learning_rate": LEARNING_RATE,
