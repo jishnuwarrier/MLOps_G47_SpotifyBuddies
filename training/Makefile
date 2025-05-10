@@ -17,7 +17,7 @@ clone:
 		git clone $(REPO_URL); \
 	fi
 
-setup:
+venv:
 	python3 -m venv $(VENV_DIR)
 	. $(VENV_DIR)/bin/activate && $(PIP) install --upgrade pip && $(PIP) install -r $(REQUIREMENTS)
 
