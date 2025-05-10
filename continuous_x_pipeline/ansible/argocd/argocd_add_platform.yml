@@ -104,7 +104,7 @@
         --repo {{ repo_path }} \
         --path {{ app_path }} \
         --dest-server https://kubernetes.default.svc \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd \
@@ -115,7 +115,7 @@
       when: app_check.rc == 0
       command: >
         argocd app set {{ app_name }} \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd
