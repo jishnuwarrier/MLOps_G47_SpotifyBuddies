@@ -21,6 +21,18 @@ spec:
       - - name: kaniko-build
           template: kaniko
 
+  - name: kaniko
+    container:
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --context=/mnt/workspace
+        - --dockerfile=Dockerfile
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-{{workflow.uid}}
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-{{workflow.uid}}
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-{{workflow.uid}}
+        - --skip-unused-stages
+        - --insecure
+
   - name: git-clone
     container:
       image: alpine/git
