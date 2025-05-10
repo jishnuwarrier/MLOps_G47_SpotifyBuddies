@@ -7,14 +7,19 @@ This guide walks you through setting up the full training environment using **Do
 
 ---
 
-## 0. Clone the Repository
+## 0. Start an instance
 
-```bash
-git clone https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-cd MLOps_G47_SpotifyBuddies
-```
+
 Once your lease begins, follow gpu_init.ipynb file on training folder
 Make sure it can access object store (follow data-pipeline/README)
+
+Use SSH to connect to the instance (connects to node1-cloud-project47 instance)
+
+```
+ssh -i ~/.ssh/id_rsa_chameleon cc@129.114.108.116
+```
+
+Use the correct floating IP
 
 ---
 

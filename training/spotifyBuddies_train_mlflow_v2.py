@@ -21,6 +21,7 @@ from tqdm import tqdm
 import mlflow
 import mlflow.pytorch
 import re
+import shutil
 # from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
@@ -292,8 +293,17 @@ def train_fn(config):
         "best_val_mrr": best_val_mrr
     }, FINAL_FULL_CHECKPOINT_PATH)
 
+
     if USE_MLFLOW:
-        mlflow.log_artifact(FINAL_FULL_CHECKPOINT_PATH)
+        # Create a temp directory to hold the artifact (bc log_artifacs() is made to send folders (not files) to MLFlow)
+        checkpoint_bundle_dir = os.path.join(OUTPUT_DIR, "checkpoint_bundle")
+        os.makedirs(checkpoint_bundle_dir, exist_ok=True)
+
+        # Copy the checkpoint file to this directory
+        shutil.copy(FINAL_FULL_CHECKPOINT_PATH, checkpoint_bundle_dir)
+
+        # Log the entire folder to MLflow (safer for large files)
+        mlflow.log_artifacts(checkpoint_bundle_dir, artifact_path="checkpoints")
 
     with open(MODEL_CONFIG_PATH, 'w') as f:
         json.dump({

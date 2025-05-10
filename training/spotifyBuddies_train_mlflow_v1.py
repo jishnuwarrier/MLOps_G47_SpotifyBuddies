@@ -102,37 +102,91 @@ VAL_EVAL_SAMPLE_RATIO = 0.2
 sampled_eval_users = random.sample(list(val_positives_full.keys()), int(len(val_positives_full) * VAL_EVAL_SAMPLE_RATIO))
 val_positives = {uid: val_positives_full[uid] for uid in sampled_eval_users}
 
-# === 8. Evaluation Function ===
-def evaluate_full_ranking(model, val_positives, k_list=[1, 5, 10]):
+# # === 8. Evaluation Function ===
+# def evaluate_full_ranking(model, val_positives, k_list=[1, 5, 10]):
+#     model.eval()
+#     with torch.no_grad():
+#         all_playlist_ids = torch.arange(model.playlist_embeddings.num_embeddings, device=device)
+#         playlist_emb = model.playlist_embeddings(all_playlist_ids)
+
+#         hit_counts = {k: 0 for k in k_list}
+#         mrr_total = 0
+#         total = 0
+
+#         for user_id, positives in tqdm(val_positives.items(), desc="🔎 Full Ranking Eval"):
+#             user_tensor = torch.tensor([user_id], device=device)
+#             user_emb = model.user_embeddings(user_tensor)
+#             scores = torch.matmul(user_emb, playlist_emb.T).squeeze(0)
+
+#             for seen_pid in positives:
+#                 scores[seen_pid] = -1e9
+
+#             top_preds = torch.topk(scores, max(k_list)).indices.tolist()
+#             rank = [i for i, pid in enumerate(top_preds) if pid in positives]
+#             if rank:
+#                 mrr_total += 1 / (rank[0] + 1)
+#             for k in k_list:
+#                 if any(pid in positives for pid in top_preds[:k]):
+#                     hit_counts[k] += 1
+#             total += 1
+
+#         hit_rates = {k: hit_counts[k] / total for k in k_list}
+#         mrr = mrr_total / total
+#         return hit_rates, mrr
+
+# === 8. New evaluation Function (Staging)===
+# # Evaluate on all slices (full validation set)
+# hit_rates, mrr = evaluate_ranking(model, base_dir="/path/to/val_eval_batches_sliced")
+
+# # Evaluate only on slice 2 (20% of users)
+# hit_rates, mrr = evaluate_ranking(model, base_dir="/path/to/val_eval_batches_sliced", slice_id=2)
+
+def load_val_eval_batches(base_dir, slice_id=None):
+    if slice_id is not None:
+        path = os.path.join(base_dir, f"val_eval_batches_part_{slice_id}.pkl")
+        with open(path, "rb") as f:
+            return pickle.load(f)
+    else:
+        all_batches = {}
+        for i in range(5):
+            path = os.path.join(base_dir, f"val_eval_batches_part_{i}.pkl")
+            with open(path, "rb") as f:
+                all_batches.update(pickle.load(f))
+        return all_batches
+
+def evaluate_ranking(model, base_dir, slice_id=None, k_list=[1, 5, 10]):
     model.eval()
+    hit_counts = {k: 0 for k in k_list}
+    mrr_total = 0
+    total_samples = 0
+
+    val_eval_batches = load_val_eval_batches(base_dir, slice_id)
+
     with torch.no_grad():
-        all_playlist_ids = torch.arange(model.playlist_embeddings.num_embeddings, device=device)
-        playlist_emb = model.playlist_embeddings(all_playlist_ids)
+        for user_id, batches in tqdm(val_eval_batches.items(), desc="Evaluating..."):
+            user_tensor = torch.tensor([user_id], device=model.user_embeddings.weight.device)
 
-        hit_counts = {k: 0 for k in k_list}
-        mrr_total = 0
-        total = 0
+            for pos_pid, neg_pids in batches:
+                full_list = [pos_pid] + neg_pids
+                candidate_tensor = torch.tensor(full_list, device=model.playlist_embeddings.weight.device)
+                user_expand = user_tensor.expand(len(full_list))
 
-        for user_id, positives in tqdm(val_positives.items(), desc="🔎 Full Ranking Eval"):
-            user_tensor = torch.tensor([user_id], device=device)
-            user_emb = model.user_embeddings(user_tensor)
-            scores = torch.matmul(user_emb, playlist_emb.T).squeeze(0)
+                scores, _ = model(user_expand, candidate_tensor, candidate_tensor)
+                _, ranking_indices = torch.sort(scores, descending=True)
 
-            for seen_pid in positives:
-                scores[seen_pid] = -1e9
+                rank_pos = (ranking_indices == 0).nonzero(as_tuple=True)[0].item()
 
-            top_preds = torch.topk(scores, max(k_list)).indices.tolist()
-            rank = [i for i, pid in enumerate(top_preds) if pid in positives]
-            if rank:
-                mrr_total += 1 / (rank[0] + 1)
-            for k in k_list:
-                if any(pid in positives for pid in top_preds[:k]):
-                    hit_counts[k] += 1
-            total += 1
+                mrr_total += 1 / (rank_pos + 1)
+                for k in k_list:
+                    if rank_pos < k:
+                        hit_counts[k] += 1
 
-        hit_rates = {k: hit_counts[k] / total for k in k_list}
-        mrr = mrr_total / total
-        return hit_rates, mrr
+                total_samples += 1
+
+    hit_rates = {k: hit_counts[k] / total_samples for k in k_list}
+    mrr = mrr_total / total_samples
+    return hit_rates, mrr
+
 
 # === 9. Initialize Model + Resume ===
 model = BPRModel(NUM_USERS, NUM_PLAYLISTS, EMBEDDING_DIM).to(device)
@@ -155,6 +209,7 @@ patience_counter = 0
 # else:
 print("Starting fresh training run.")
 
+
 # === 10. MLFlow Start + Log Params ===
 mlflow.set_experiment(f"SpotifyBuddies_experiment1")
 try:
@@ -176,7 +231,64 @@ mlflow.log_params({
     "num_playlists": NUM_PLAYLISTS
 })
 
-# === 11. Training Loop ===
+# # === 11. Training Loop ===
+# for epoch in range(start_epoch, EPOCHS + 1):
+#     model.train()
+#     total_loss = 0
+#     optimizer.zero_grad(set_to_none=True)
+
+#     for step, (user_ids, pos_pids, neg_pids) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch}")):
+#         user_ids = user_ids.to(device, non_blocking=True)
+#         pos_pids = pos_pids.to(device, non_blocking=True)
+#         neg_pids = neg_pids.to(device, non_blocking=True)
+
+#         with autocast(enabled=use_amp):
+#             pos_scores, neg_scores = model(user_ids, pos_pids, neg_pids)
+#             loss = bpr_loss(pos_scores, neg_scores) / GRAD_ACCUM_STEPS
+
+#         scaler.scale(loss).backward()
+
+#         if (step + 1) % GRAD_ACCUM_STEPS == 0:
+#             scaler.step(optimizer)
+#             scaler.update()
+#             optimizer.zero_grad(set_to_none=True)
+
+#         total_loss += loss.item() * GRAD_ACCUM_STEPS
+#         del user_ids, pos_pids, neg_pids, pos_scores, neg_scores, loss
+
+#     avg_train_loss = total_loss / len(train_loader)
+#     val_hit_rates, val_mrr = evaluate_ranking(model, val_positives)
+
+#     print(f"📊 Epoch {epoch} | Loss: {avg_train_loss:.4f} | Val MRR: {val_mrr:.4f} | Hit@10: {val_hit_rates[10]:.4f}")
+
+
+#     mlflow.log_metrics({
+#         "train_loss": avg_train_loss,
+#         "val_mrr": val_mrr,
+#         **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}
+#     }, step=epoch)
+
+
+#     if val_mrr > BEST_VAL_MRR:
+#         BEST_VAL_MRR = val_mrr
+#         patience_counter = 0
+#         mlflow.pytorch.log_model(model, artifact_path="bpr_model")
+#     else:
+#         patience_counter += 1
+#         if patience_counter >= EARLY_STOPPING_PATIENCE:
+#             print(f"⏹️ Early stopping at epoch {epoch}.")
+#             mlflow.log_metric("early_stopping_epoch", epoch)
+#             break
+
+
+# === 11. New Training Loop (Staging) ===
+
+import mlflow.pytorch
+from ray import tune  # Optional
+
+BEST_VAL_MRR = -1
+patience_counter = 0
+
 for epoch in range(start_epoch, EPOCHS + 1):
     model.train()
     total_loss = 0
@@ -202,41 +314,53 @@ for epoch in range(start_epoch, EPOCHS + 1):
         del user_ids, pos_pids, neg_pids, pos_scores, neg_scores, loss
 
     avg_train_loss = total_loss / len(train_loader)
-    val_hit_rates, val_mrr = evaluate_full_ranking(model, val_positives)
+    val_hit_rates, val_mrr = evaluate_ranking(model, val_eval_batches)
 
     print(f"📊 Epoch {epoch} | Loss: {avg_train_loss:.4f} | Val MRR: {val_mrr:.4f} | Hit@10: {val_hit_rates[10]:.4f}")
 
-    # writer.add_scalar('Loss/train', avg_train_loss, epoch)
-    # writer.add_scalar('Val/MRR', val_mrr, epoch)
-    # for k in val_hit_rates:
-    #     writer.add_scalar(f'Val/Hit@{k}', val_hit_rates[k], epoch)
-
+    # === Log to MLflow ===
     mlflow.log_metrics({
         "train_loss": avg_train_loss,
         "val_mrr": val_mrr,
         **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}
     }, step=epoch)
 
-    # Checkpointing
-    checkpoint_data = {
-        'epoch': epoch,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'best_val_mrr': BEST_VAL_MRR
-    }
+    # === Optional Ray Tune reporting ===
+    if "tune" in globals():
+        tune.report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
 
+    # === Save best model checkpoint ===
     if val_mrr > BEST_VAL_MRR:
         BEST_VAL_MRR = val_mrr
         patience_counter = 0
-        # torch.save(checkpoint_data, os.path.join(CHECKPOINT_DIR, f'checkpoint_epoch_{epoch}_mrr_{val_mrr:.4f}.pt'))
-        # torch.save(checkpoint_data, CHECKPOINT_PATH)
+
+        # Save full training checkpoint
+        checkpoint_path = f"{CHECKPOINT_DIR}/checkpoint_epoch_{epoch}_mrr_{val_mrr:.4f}.pt"
+        torch.save({
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scaler_state_dict": scaler.state_dict(),
+            "best_val_mrr": BEST_VAL_MRR
+        }, checkpoint_path)
+
+        # Log to MLflow
+        mlflow.log_artifact(checkpoint_path, artifact_path="checkpoints")
         mlflow.pytorch.log_model(model, artifact_path="bpr_model")
+
     else:
         patience_counter += 1
         if patience_counter >= EARLY_STOPPING_PATIENCE:
             print(f"⏹️ Early stopping at epoch {epoch}.")
             mlflow.log_metric("early_stopping_epoch", epoch)
             break
+
+# === Final Model Save (if not early stopped) ===
+final_path = f"{CHECKPOINT_DIR}/final_model.pt"
+torch.save(model.state_dict(), final_path)
+mlflow.log_artifact(final_path, artifact_path="final")
+
+
 
 # === 12. Cleanup ===
 # writer.close()
