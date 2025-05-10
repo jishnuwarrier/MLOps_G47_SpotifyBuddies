@@ -37,6 +37,8 @@
       changed_when: false
 
     - name: Add repository to ArgoCD
+      delegate_to: localhost
+      run_once: true
       command: >
         argocd repo add {{ repo_path }} --port-forward --port-forward-namespace=argocd
       register: repo_result
