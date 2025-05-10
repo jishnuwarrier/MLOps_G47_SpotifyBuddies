@@ -3,8 +3,8 @@
   become: yes
   vars:
     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    repo_dest: /tmp/spotifybuddies/continuous_x_pipeline/
-    workflow_file: workflows/build-initial.yaml   
+    repo_dest: /tmp/spotifybuddies/
+    workflow_file: continuous_x_pipeline/workflows/build-initial.yaml   
     workflow_name: build-initial
     argo_namespace: argo
 
@@ -22,8 +22,8 @@
   become: yes
   vars:
     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    repo_dest: /tmp/spotifybuddies/continuous_x_pipeline/
-    workflow_file: workflows/build-initial.yaml   
+    repo_dest: /tmp/spotifybuddies/
+    workflow_file: continuous_x_pipeline/workflows/build-initial.yaml   
     workflow_name: build-initial
     argo_namespace: argo
 
