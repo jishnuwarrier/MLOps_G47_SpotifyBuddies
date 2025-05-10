@@ -16,6 +16,9 @@
 
     external_port_prom: "9090"
     external_port_graf: "3000"
+
+    prom_nodeport: "{{ external_port_prom }}"
+    graf_nodeport: "{{ external_port_graf }}"
     grafana_admin_pw: "grafana-admin"
 
   tasks:
