@@ -6,13 +6,13 @@
     argocd_username: "admin"
     repo_path: "https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git"
     app_name: "spotifybuddies-platform"
-    app_path: "k8s/platform"
+    app_path: "continuous_x_pipeline/k8s/platform"
     minio_access_key: "your-access-key"
 
     prom_app: "spotifybuddies-prometheus"
-    prom_path: "k8s/monitoring/prometheus"
+    prom_path: "continuous_x_pipeline/k8s/monitoring/prometheus"
     graf_app: "spotifybuddies-grafana"
-    graf_path: "k8s/monitoring/grafana"
+    graf_path: "continuous_x_pipeline/k8s/monitoring/grafana"
 
     external_port_prom: "9090"
     external_port_graf: "3000"
