@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   ray-head:
-    image: rayproject/ray:2.42.0
+    image: rayproject/ray:2.42.0-gpu
     container_name: ray-head
     command: >
       bash -c "
@@ -15,9 +15,16 @@ services:
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   ray-worker:
-    image: rayproject/ray:2.42.0
+    image: rayproject/ray:2.42.0-gpu
     container_name: ray-worker
     depends_on:
       - ray-head
@@ -29,6 +36,13 @@ services:
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   jupyter:
     image: jupyter-mlflow
@@ -47,6 +61,8 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: ["gpu"]
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 
