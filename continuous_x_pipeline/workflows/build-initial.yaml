@@ -60,16 +60,16 @@ spec:
       - name: workdir
         mountPath: /mnt/workspace
 
-  - name: kaniko
-    container:
-      image: gcr.io/kaniko-project/executor:latest
-      args:
-        - --dockerfile=/mnt/workspace/Dockerfile
-        - --context=/mnt/workspace
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
-        - --insecure
+  # - name: kaniko
+  #   container:
+  #     image: gcr.io/kaniko-project/executor:latest
+  #     args:
+  #       - --dockerfile=/mnt/workspace/Dockerfile
+  #       - --context=/mnt/workspace
+  #       - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
+  #       - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
+  #       - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
+  #       - --insecure
       volumeMounts:
         - name: workdir
           mountPath: /mnt/workspace
