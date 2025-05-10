@@ -208,6 +208,10 @@ SELECTED_VAL_SLICES = [0] #Select slices among 0, 1, 2, 3, 4. Can select all as 
 del triplets
 # === 10. TRAINING FUNCTION ===
 def train_fn(config):
+    if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
+        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
     scaler = GradScaler(enabled=use_amp)
