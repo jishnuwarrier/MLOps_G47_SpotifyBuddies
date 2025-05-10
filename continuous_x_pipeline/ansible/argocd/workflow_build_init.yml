@@ -15,6 +15,7 @@
         dest: "{{ repo_dest }}"
         version: main
         update: yes
+        force: yes
 
 - name: Run Argo Workflow from GitHub Repo
   hosts: node1
