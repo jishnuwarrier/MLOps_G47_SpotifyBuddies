@@ -8,6 +8,27 @@
         url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
         dest: /usr/local/bin/argocd
         mode: '0755'
+
+- name: Ensure node1 can resolve external domains
+  hosts: node1
+  become: yes
+  tasks:
+    - name: Add public DNS servers to /etc/resolv.conf
+      lineinfile:
+        dest: /etc/resolv.conf
+        regexp: '^nameserver'
+        insertafter: BOF
+        line: 'nameserver 8.8.8.8'
+        state: present
+
+    - name: Add Cloudflare DNS server to /etc/resolv.conf
+      lineinfile:
+        dest: /etc/resolv.conf
+        regexp: '^nameserver 1\.1\.1\.1'
+        insertafter: '^nameserver 8\.8\.8\.8'
+        line: 'nameserver 1.1.1.1'
+        state: present
+
 - name: Deploy MLflow platform via ArgoCD & Helm with MinIO secret handling
   hosts: node1
   become: yes
