@@ -67,6 +67,19 @@
       register: login_result
       changed_when: false
 
+    - name: Install resolvconf package (Debian/Ubuntu)
+      apt:
+        name: resolvconf
+        state: present
+    - name: Write resolvconf base file
+      copy:
+        dest: /etc/resolvconf/resolv.conf.d/base
+        content: |
+          nameserver 8.8.8.8
+          nameserver 1.1.1.1
+    - name: Apply resolvconf
+      command: resolvconf -u
+
     - name: Add repository to ArgoCD
       command: >
         argocd repo add {{ repo_path }} --port-forward --port-forward-namespace=argocd
