@@ -6,3 +6,4 @@ tqdm
 polars
 mlflow
 ray[tune, train]
+requests
