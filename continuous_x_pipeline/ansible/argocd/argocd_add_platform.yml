@@ -14,8 +14,9 @@
     graf_app: "spotifybuddies-grafana"
     graf_path: "k8s/monitoring/grafana"
 
-    external_port_prom: "9090"
-    external_port_graf: "3000"
+    prom_nodeport: "9090"
+    graf_nodeport: "3000"
+
     grafana_admin_pw: "grafana-admin"
 
   tasks:
@@ -35,6 +36,14 @@
         --password "{{ argocd_password.stdout }}" --grpc-web --port-forward --port-forward-namespace=argocd
       register: login_result
       changed_when: false
+
+    - name: Log in to ArgoCD (locally)
+      delegate_to: localhost
+      run_once: true
+      command: >
+        argocd login localhost --username {{ argocd_username }}
+          --password "{{ argocd_password.stdout }}"
+          --grpc-web --port-forward --port-forward-namespace=argocd
 
     - name: Add repository to ArgoCD
       delegate_to: localhost
@@ -103,7 +112,7 @@
         --repo {{ repo_path }} \
         --path {{ app_path }} \
         --dest-server https://kubernetes.default.svc \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd \
@@ -114,7 +123,7 @@
       when: app_check.rc == 0
       command: >
         argocd app set {{ app_name }} \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd
@@ -189,3 +198,4 @@
           --helm-set-string service.nodePort={{ graf_nodeport }} \
           --helm-set-string adminPassword={{ grafana_admin_pw }} \
           --port-forward --port-forward-namespace=argocd
+
