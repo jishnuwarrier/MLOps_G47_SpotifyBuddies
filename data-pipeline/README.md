@@ -100,4 +100,7 @@ rclone copy /data/Food-11 chi_tacc:object-persist-project47 \
 
 # top 20 dirs taking up space
 du -h --max-depth=1 ~ | sort -hr | head -n 20
+
+# check which dirs are taking up space
+du -sh /path/to/directory/*/ | sort -h
 ```
