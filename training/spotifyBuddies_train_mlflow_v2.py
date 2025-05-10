@@ -353,17 +353,26 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
 
     train_with_resources = tune.with_resources(
         train_fn,
-        resources={"cpu": 4, "gpu": 1}  # Adjust this to match your per-trial needs
+        resources={"cpu": 4, "gpu": 0.5}  # We should get two workers sharing the GPU
     )
 
+    # tune.run(
+    #     train_fn,
+    #     config=RAY_SEARCH_SPACE,
+    #     metric="val_mrr",
+    #     mode="max",
+    #     num_samples=RAY_NUM_SAMPLES,
+    #     name="bpr_hpo",
+    #     resources_per_trial={"cpu": 4, "gpu": 0.5}
+    # )
     tune.run(
-        train_fn,
+        train_with_resources,
         config=RAY_SEARCH_SPACE,
         metric="val_mrr",
         mode="max",
         num_samples=RAY_NUM_SAMPLES,
-        name="bpr_hpo",
-        resources_per_trial={"cpu": 4, "gpu": 0.5}
+        name="bpr_hpo"
     )
+
 else:
     train_fn(default_config)
