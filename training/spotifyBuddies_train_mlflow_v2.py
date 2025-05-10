@@ -292,6 +292,9 @@ def train_fn(config):
         "best_val_mrr": best_val_mrr
     }, FINAL_FULL_CHECKPOINT_PATH)
 
+    if USE_MLFLOW:
+        mlflow.log_artifact(FINAL_FULL_CHECKPOINT_PATH)
+
     with open(MODEL_CONFIG_PATH, 'w') as f:
         json.dump({
             "embedding_dim": config["embedding_dim"],
