@@ -2,7 +2,7 @@ print("Starting training job! Let's go")
 
 # === 1. GENERAL PARAMETERS ===
 SEED = 42
-USE_RAY_TUNE = False
+USE_RAY_TUNE = True
 USE_MLFLOW = True
 RUN_ON_CHAMELEON = True
 TRAIN_FULL_DATASET = True   # Select False for training on a toy dataset for testing and quick debugging

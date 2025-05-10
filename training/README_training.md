@@ -37,7 +37,7 @@ cd MLOps_G47_SpotifyBuddies
 Use the provided Docker Compose file to spin up the Ray and MLflow environment:
 
 ```bash
-docker compose -f docker-compose.mlflow-ray.yaml up -d
+docker compose -f docker-compose-train.yaml up -d
 ```
 
 This launches:
