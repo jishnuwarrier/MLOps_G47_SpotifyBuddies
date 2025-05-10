@@ -70,11 +70,11 @@
       register: login_result
       changed_when: false
 
-    - name: Add repository to ArgoCD (locally)
+    - name: Add repository to ArgoCD (delegated to controller)
       delegate_to: localhost
       run_once: true
       environment:
-        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
+        PATH: "{{ lookup('env','HOME') }}/.local/bin:{{ lookup('env','PATH') }}"
       command: >
         argocd repo add {{ repo_path }}
           --port-forward
