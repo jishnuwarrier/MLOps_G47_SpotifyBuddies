@@ -21,6 +21,8 @@ ssh -i ~/.ssh/id_rsa_chameleon cc@129.114.108.116
 
 Use the correct floating IP
 
+
+2. Make sure it can access object store (follow data-pipeline/README)
 ---
 
 ## 1. Clone the Repository
@@ -65,6 +67,14 @@ make venv
 ```
 
 This will create the `venv/` directory and install all required packages.
+
+Then:
+
+
+```bash
+source .venv/bin/activate
+```
+
 
 ---
 

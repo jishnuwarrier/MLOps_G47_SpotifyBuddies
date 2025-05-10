@@ -89,7 +89,8 @@ RAY_SEARCH_SPACE = {
     "embedding_dim": tune.choice([64, 128]) if RAY_TUNE_AVAILABLE else EMBEDDING_DIM,
     "learning_rate": tune.loguniform(1e-4, 1e-2) if RAY_TUNE_AVAILABLE else LEARNING_RATE,
     "batch_size": tune.choice([8192, 16384]) if RAY_TUNE_AVAILABLE else BATCH_SIZE,
-    "val_batch_dir": VAL_EVAL_BATCH_DIR
+    "val_batch_dir": VAL_EVAL_BATCH_DIR,
+    "triplet_path": TRIPLET_DATASET_PATH
 }
 
 
@@ -202,12 +203,13 @@ def evaluate_ranking(model, base_dir, slice_id=None, k_list=[1, 5, 10]):
 SELECTED_VAL_SLICES = [0] #Select slices among 0, 1, 2, 3, 4. Can select all as well [0, 1, 2, 3, 4]. Each slice takes about 8 minutes to evaluate
 
 
-
+del triplets
 # === 10. TRAINING FUNCTION ===
 def train_fn(config):
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
     scaler = GradScaler(enabled=use_amp)
+    triplets = torch.load(config["triplet_path"])
     train_loader = DataLoader(
         BPRTripletDataset(triplets),
         batch_size=config["batch_size"],
@@ -342,7 +344,8 @@ default_config = {
     "embedding_dim": EMBEDDING_DIM,
     "learning_rate": LEARNING_RATE,
     "batch_size": BATCH_SIZE,
-    "val_batch_dir": VAL_EVAL_BATCH_DIR
+    "val_batch_dir": VAL_EVAL_BATCH_DIR,
+    "triplet_path": TRIPLET_DATASET_PATH
 }
 
 if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
