@@ -5,7 +5,7 @@ SEED = 42
 USE_RAY_TUNE = True
 USE_MLFLOW = True
 RUN_ON_CHAMELEON = True
-TRAIN_FULL_DATASET = True   # Select False for training on a toy dataset for testing and quick debugging
+TRAIN_FULL_DATASET = False   # Select False for training on a toy dataset for testing and quick debugging
 
 # === 2. IMPORT DEPENDENCIES ===
 import os
