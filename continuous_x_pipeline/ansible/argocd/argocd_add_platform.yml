@@ -31,6 +31,8 @@
       register: argocd_password
 
     - name: Log in to ArgoCD
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
       command: >
         argocd login localhost --username {{ argocd_username }} \
         --password "{{ argocd_password.stdout }}" --grpc-web --port-forward --port-forward-namespace=argocd
@@ -40,6 +42,8 @@
     - name: Log in to ArgoCD (locally)
       delegate_to: localhost
       run_once: true
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
       command: >
         argocd login localhost --username {{ argocd_username }}
           --password "{{ argocd_password.stdout }}"
