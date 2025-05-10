@@ -314,6 +314,7 @@ def train_fn(config):
         }, f)
 
 
+
     if USE_MLFLOW:
         mlflow.pytorch.log_model(model, artifact_path="final_model")
 

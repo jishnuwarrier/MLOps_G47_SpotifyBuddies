@@ -49,3 +49,4 @@ services:
           devices:
             - capabilities: ["gpu"]
 
+
