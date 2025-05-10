@@ -1,3 +1,12 @@
+- name: Install ArgoCD CLI on node1
+  hosts: node1
+  become: yes
+  tasks:
+    - name: Download argocd binary
+      get_url:
+        url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        dest: /usr/local/bin/argocd
+        mode: '0755'
 ---
 - name: Deploy MLflow platform via ArgoCD & Helm with MinIO secret handling
   hosts: node1
@@ -20,17 +29,6 @@
     grafana_admin_pw: "grafana-admin"
 
   tasks:
-
-    - name: Install ArgoCD CLI on node1
-      hosts: node1
-      become: yes
-      tasks:
-        - name: Download argocd binary
-          get_url:
-            url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-            dest: /usr/local/bin/argocd
-            mode: '0755'
-
     - name: Get ArgoCD admin password from Kubernetes secret
       command: >
         kubectl get secret -n argocd argocd-initial-admin-secret \
