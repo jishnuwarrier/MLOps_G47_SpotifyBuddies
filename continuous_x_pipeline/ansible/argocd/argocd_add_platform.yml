@@ -49,6 +49,12 @@
       set_fact:
         external_ip: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.56\\..*') | list | first }}"
 
+    - debug:                                   
+        msg: |
+          external_ip = {{ external_ip }}
+          prom_nodeport = {{ prom_nodeport }}
+          graf_nodeport = {{ graf_nodeport }}
+
     - name: Ensure spotifybuddies-platform namespace exists
       command: kubectl get namespace spotifybuddies-platform
       register: ns_check
