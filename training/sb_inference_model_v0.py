@@ -49,11 +49,12 @@ def rank_playlists_for_user(user_id, top_k=10):
     top_indices = torch.topk(scores, k=min(top_k, len(candidate_playlists))).indices
     return [candidate_playlists[i] for i in top_indices]
 
-# === 8. Example usage ===
+# Example usage
 example_user = 42
 top_playlists = rank_playlists_for_user(example_user, top_k=10)
 print(f"Top playlists for user {example_user}:", top_playlists)
 
+# === 8. Define a batched inference function ===
 # Define a batched inference function
 def rank_playlists_for_users(user_ids: list[int], top_k=10):
     all_user_ids = []
