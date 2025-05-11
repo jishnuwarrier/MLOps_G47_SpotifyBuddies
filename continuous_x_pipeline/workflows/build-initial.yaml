@@ -83,3 +83,5 @@ spec:
           - name: DOCKER_TLS_CERTDIR
             value: "" 
         volumeMounts:
+          - name: workdir
+            mountPath: /mnt/workspace
