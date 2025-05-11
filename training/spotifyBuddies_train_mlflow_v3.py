@@ -287,7 +287,7 @@ def train_fn(config):
             }, step=epoch)
 
         if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
-            tune.report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
+            report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
 
         # === Save best model ===
         if val_mrr > best_val_mrr:
@@ -365,7 +365,7 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
 
     train_with_resources = tune.with_resources(
         train_fn,
-        resources={"cpu": 8, "gpu": 0.5}  # We should get two workers sharing the GPU
+        resources={"cpu": 4, "gpu": 0.5}  # We should get two workers sharing the GPU
     )
 
     # tune.run(
