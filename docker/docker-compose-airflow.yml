@@ -1,7 +1,8 @@
 name: airflow
 services:
   airflow-webserver:
-    image: apache/airflow:2.9.3-python3.11
+    # image: apache/airflow:2.9.3-python3.11
+    build: .
     container_name: airflow-webserver
     entrypoint: /bin/bash
     command: >
@@ -18,9 +19,16 @@ services:
       - MINIO_URL=http://minio:9000
       - MINIO_USER=your-access-key
       - MINIO_PASSWORD=your-secret-key
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
     volumes:
       - ../model_monitoring/dags/:/opt/airflow/dags
       - airflow_shared:/opt/airflow
+      - ~/.config/rclone/rclone.conf:/home/airflow/.config/rclone/rclone.conf
+      - /mnt/object:/mnt/object
     depends_on:
       airflow-setup:
         condition: service_completed_successfully
@@ -28,7 +36,8 @@ services:
       - production_net
 
   airflow-scheduler:
-    image: apache/airflow:2.9.3-python3.11
+    # image: apache/airflow:2.9.3-python3.11
+    build: .
     container_name: airflow-scheduler
     entrypoint: /bin/bash
     command: >
@@ -43,9 +52,16 @@ services:
       - MINIO_URL=http://minio:9000
       - MINIO_USER=your-access-key
       - MINIO_PASSWORD=your-secret-key
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
     volumes:
       - ../model_monitoring/dags/:/opt/airflow/dags
       - airflow_shared:/opt/airflow
+      - ~/.config/rclone/rclone.conf:/home/airflow/.config/rclone/rclone.conf
+      - /mnt/object:/mnt/object
     depends_on:
       airflow-setup:
         condition: service_completed_successfully
@@ -53,7 +69,8 @@ services:
       - production_net
 
   airflow-setup:
-    image: apache/airflow:2.9.3-python3.11
+    # image: apache/airflow:2.9.3-python3.11
+    build: .
     container_name: airflow-setup
     entrypoint: /bin/bash
     command: >
@@ -63,6 +80,11 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:1234@postgres/postgres
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
     volumes:
       - ../model_monitoring/dags:/opt/airflow/dags
       - airflow_shared:/opt/airflow
@@ -72,3 +94,7 @@ services:
 
 volumes:
   airflow_shared:
+
+networks:
+  production_net:
+    driver: bridge

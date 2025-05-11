@@ -22,8 +22,8 @@ import mlflow
 import mlflow.pytorch
 import re
 import shutil
-from ray import tune
 from ray.train import report
+from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 print("-Imports done. Setting directories now.")
@@ -85,7 +85,6 @@ MLFLOW_TAGS = {
 
 # === 6. RAY TUNE PARAMETERS ===
 try:
-    from ray import tune
     RAY_TUNE_AVAILABLE = True
 except ImportError:
     RAY_TUNE_AVAILABLE = False
@@ -287,7 +286,11 @@ def train_fn(config):
             }, step=epoch)
 
         if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
-            report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
+            report(metrics={
+                "train_loss": avg_train_loss,
+                "val_mrr": val_mrr,
+                **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}
+            })
 
         # === Save best model ===
         if val_mrr > best_val_mrr:
