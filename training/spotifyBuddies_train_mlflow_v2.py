@@ -216,6 +216,7 @@ def train_fn(config):
     if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
         os.makedirs(CHECKPOINT_DIR, exist_ok=True)
         os.makedirs(OUTPUT_DIR, exist_ok=True)
+    LOG_ARTIFACTS = not (USE_RAY_TUNE and RAY_TUNE_AVAILABLE)
 
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
