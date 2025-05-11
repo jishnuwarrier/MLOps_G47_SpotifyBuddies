@@ -1,8 +1,10 @@
 import json
 import asyncio
+import time
+from pathlib import Path
 
 import psycopg2
-import sql
+from psycopg2 import sql, OperationalError
 from fastapi import FastAPI, Depends, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -17,23 +19,43 @@ app = FastAPI(
     version="0.0.1",
     lifespan=lifespan,
 )
-
+conn_str = "dbname=client user=postgres password=1234 host=postgres"
+# conn_str = "postgresql+psycopg2://postgres:1234@postgres/client"
 if settings.LOCAL:
     templates = Jinja2Templates(directory="templates")
 else:
     templates = Jinja2Templates(directory="app/templates")
+max_retries = 10
+retry_delay = 3  # seconds
 
-# Connect to postgres
-conn = psycopg2.connect(
-    dbname=settings.DB_NAME,
-    user=settings.DB_USER,
-    password=settings.DB_PASSWORD,
-    host=settings.DB_HOST,
-    port=settings.DB_PORT,
-)
+for attempt in range(max_retries):
+    try:
+        # conn = psycopg2.connect(conn_str)
+        conn = psycopg2.connect(
+            dbname=settings.DB_NAME,
+            user=settings.DB_USER,
+            password=settings.DB_PASSWORD,
+            host=settings.DB_HOST,
+            port=settings.DB_PORT,
+        )
+        break  # Connection successful
+    except OperationalError as e:
+        if "the database system is starting up" in str(e):
+            print(f"Database is starting up. Retrying in {retry_delay}s...")
+            time.sleep(retry_delay)
+        else:
+            raise  # Unexpected error, re-raise
+else:
+    raise Exception("Could not connect to the database after several retries.")
 
-with conn as cursor:
-    cursor.execute(open("schema.sql", "r").read())
+
+sql_path = Path(__file__).parent / "schema.sql"
+with open(sql_path, "r") as file:
+    sql_script = file.read()
+
+with conn:
+    with conn.cursor() as cur:
+        cur.execute(sql_script)
 
 
 class UserResponse(BaseModel):
@@ -43,6 +65,7 @@ class UserResponse(BaseModel):
 class FeedbackRequestSchema(BaseModel):
     user_id: int
     playlist_id: int
+    score: int
 
 
 @app.get("/health")
@@ -66,12 +89,14 @@ async def get_playlists(user_id: int, DB=Depends(get_async_redis_session)):
 
 @app.post("/feedback")
 def send_feedback(req: FeedbackRequestSchema):
-    conn.execute(
-        sql.SQL("insert into {} values (%s, %s)").format(
-            sql.Identifier("user_feedback ")
-        ),
-        [req.user_id, req.playlist_id],
-    )
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql.SQL("insert into {} values (%s, %s, %s)").format(
+                    sql.Identifier("user_feedback")
+                ),
+                [req.user_id, req.playlist_id, req.score],
+            )
 
     return {"msg": "Feedback Sent"}
 

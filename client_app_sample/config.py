@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     DB_USER: str = "postgres"
     DB_PASSWORD: str = "1234"
     DB_NAME: str = "client"
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
+    DB_HOST: str = "postgres"
+    DB_PORT: str = "5432"
 
     model_config = SettingsConfigDict(env_file=".env")
 

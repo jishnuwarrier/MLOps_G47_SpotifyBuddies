@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y curl && \
     apt-get install -y libpq-dev gcc
 
+
 # Disable Python downloads, because we want to use the system interpreter
 # across both images. If using a managed Python version, it needs to be
 # copied from the build image into the final image; see `standalone.Dockerfile`
@@ -33,6 +34,7 @@ FROM python:3.12-slim-bookworm
 # Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
 # will fail.
 
+RUN apt-get update && apt-get install libpq5 -y
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
 
