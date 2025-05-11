@@ -381,13 +381,24 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
     #     resources_per_trial={"cpu": 4, "gpu": 0.5}
     # )
 
+    # tune.run(
+    #     train_with_resources,
+    #     config=RAY_SEARCH_SPACE,
+    #     metric="val_mrr",
+    #     mode="max",
+    #     num_samples=RAY_NUM_SAMPLES,
+    #     name="bpr_hpo"
+    # )
+
     tune.run(
         train_with_resources,
         config=RAY_SEARCH_SPACE,
         metric="val_mrr",
         mode="max",
         num_samples=RAY_NUM_SAMPLES,
-        name="bpr_hpo"
+        name="bpr_hpo",
+        storage_path="~/ray_results",   # Replaces local_dir
+        resume="AUTO"
     )
 
 else:
