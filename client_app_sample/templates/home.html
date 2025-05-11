@@ -58,16 +58,37 @@
                 div.innerHTML = `
                     <div>${item}</div>
                     <button onclick="handleFeedback(${item}, 'like')">👍</button>
-                    <!-- <button onclick="handleFeedback(${item}, 'dislike')">👎</button> -->
                 `;
                 grid.appendChild(div);
             });
         }
 
-        function handleFeedback(itemId, action) {
-            console.log(`User ${action}d item ${itemId}`);
-            // Optionally send feedback to API here
+        async function handleFeedback(playlistId) {
+            const userId = document.getElementById("user_id").value;
+            if (!userId) {
+                alert("User ID is missing");
+                return;
+            }
+
+            const response = await fetch("/feedback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    playlist_id: playlistId
+                })
+            });
+
+            if (response.ok) {
+                alert("Feedback sumitted");
+                console.log(`Feedback submitted for playlist ${playlistId}`);
+            } else {
+                console.error("Failed to submit feedback");
+            }
         }
+
     </script>
 </body>
 </html>
