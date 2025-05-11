@@ -93,3 +93,8 @@ services:
       - redis
     networks:
       - production_net
+
+networks:
+  production_net:
+    external: true
+

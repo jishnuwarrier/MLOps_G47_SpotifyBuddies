@@ -11,7 +11,7 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__FERNET_KEY=wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://user:password@postgres/postgres
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:1234@postgres/postgres
       - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__SECRET_KEY=some-secret
@@ -36,7 +36,7 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__FERNET_KEY=wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://user:password@postgres/postgres
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:1234@postgres/postgres
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - LABEL_STUDIO_URL=http://label-studio:8080
       - LABEL_STUDIO_USER_TOKEN=ab9927067c51ff279d340d7321e4890dc2841c4a
@@ -61,7 +61,7 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__FERNET_KEY=wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://user:password@postgres/postgres
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:1234@postgres/postgres
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     volumes:
       - ../model_monitoring/dags:/opt/airflow/dags

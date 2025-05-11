@@ -28,15 +28,21 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mlflowdb
+      POSTGRES_MULTIPLE_DATABASES: mlflowdb,client
+      POSTGRES_PASSWORD: 1234
     ports:
       - "5432:5432"
     volumes:
-      - /mnt/block/postgres_data:/var/lib/postgresql/data
+      # - /mnt/block/postgres_data:/var/lib/postgresql/data
+      - ../docker:/docker-entrypoint-initdb.d
     networks:
       - production_net
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
 
 networks:
   production_net:
