@@ -20,9 +20,9 @@ services:
       timeout: 3s
       retries: 3
     ports:
-      - "5000:80"
+      - "8000:80"
     expose:
-      - "5000"
+      - "8000"
     environment:
       - DEBUG=False
       - REDIS_HOST=redis
@@ -78,23 +78,25 @@ services:
     command: "fastapi run --host 0.0.0.0 --port 80 /app/main.py"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 5s
+      interval: 10s
       timeout: 3s
       retries: 3
     ports:
-      - "7000:80"
+      - "5000:80"
     expose:
-      - "7000"
+      - "5000"
     environment:
       - DEBUG=False
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
     networks:
       - production_net
 
 networks:
   production_net:
     external: true
-

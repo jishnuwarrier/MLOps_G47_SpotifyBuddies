@@ -21,9 +21,9 @@ services:
       - MINIO_PASSWORD=your-secret-key
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=client
     volumes:
       - ../model_monitoring/dags/:/opt/airflow/dags
       - airflow_shared:/opt/airflow
@@ -54,9 +54,9 @@ services:
       - MINIO_PASSWORD=your-secret-key
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=client
     volumes:
       - ../model_monitoring/dags/:/opt/airflow/dags
       - airflow_shared:/opt/airflow
@@ -82,12 +82,14 @@ services:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=client
     volumes:
       - ../model_monitoring/dags:/opt/airflow/dags
       - airflow_shared:/opt/airflow
+      - ~/.config/rclone/rclone.conf:/home/airflow/.config/rclone/rclone.conf
+      - /mnt/object:/mnt/object 
     networks:
       - production_net
     restart: "no"
