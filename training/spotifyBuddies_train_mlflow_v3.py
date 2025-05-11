@@ -5,7 +5,7 @@ SEED = 42
 USE_RAY_TUNE = True
 USE_MLFLOW = True
 RUN_ON_CHAMELEON = True
-TRAIN_FULL_DATASET = False   # Select False for training on a toy dataset for testing and quick debugging
+TRAIN_FULL_DATASET = True   # Select False for training on a toy dataset for testing and quick debugging
 
 # === 2. IMPORT DEPENDENCIES ===
 import os
@@ -71,15 +71,15 @@ EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
 GRAD_ACCUM_STEPS = 2
 LEARNING_RATE = 0.005
-EPOCHS = 1
+EPOCHS = 5
 EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
 # === 5. MLFLOW PARAMETERS ===
-MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment4_RayTune'
+MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment5_RayTune'
 MLFLOW_TAGS = {
     "platform": "chameleon_cloud",
-    "mode": "toy",
+    "mode": "full",
     "run_type": "baseline"
 }
 
