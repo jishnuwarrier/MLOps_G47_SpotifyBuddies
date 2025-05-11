@@ -5,7 +5,7 @@
   vars:
     app_name: spotifybuddies-staging
     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    app_path: k8s/staging
+    app_path: continuous_x_pipeline/k8s/staging
     argocd_namespace: argocd
 
   tasks:

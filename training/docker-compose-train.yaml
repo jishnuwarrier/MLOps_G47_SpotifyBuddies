@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   ray-head:
-    image: rayproject/ray:2.42.0
+    image: rayproject/ray:2.42.0-gpu
     container_name: ray-head
     command: >
       bash -c "
@@ -12,12 +12,22 @@ services:
       - "6379:6379"  # Ray cluster comm
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   ray-worker:
-    image: rayproject/ray:2.42.0
+    image: rayproject/ray:2.42.0-gpu
     container_name: ray-worker
     depends_on:
       - ray-head
@@ -26,9 +36,19 @@ services:
       ray start --address=ray-head:6379 --block"
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   jupyter:
     image: jupyter-mlflow
@@ -38,6 +58,9 @@ services:
       - "8888:8888"
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
       - OBJECT_DATA_DIR=/mnt/data
     volumes:
       - ~/MLOps_G47_SpotifyBuddies:/home/jovyan/work
@@ -47,6 +70,9 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: ["gpu"]
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
 
 

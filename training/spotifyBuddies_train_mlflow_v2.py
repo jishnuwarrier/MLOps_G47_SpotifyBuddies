@@ -22,7 +22,8 @@ import mlflow
 import mlflow.pytorch
 import re
 import shutil
-# from ray import tune
+from ray import tune
+from ray.train import report
 
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
@@ -70,10 +71,10 @@ EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
 # === 5. MLFLOW PARAMETERS ===
-MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment3_full'
+MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment4_RayTune'
 MLFLOW_TAGS = {
     "platform": "chameleon_cloud",
-    "mode": "full",
+    "mode": "toy",
     "run_type": "baseline"
 }
 
@@ -207,6 +208,10 @@ SELECTED_VAL_SLICES = [0] #Select slices among 0, 1, 2, 3, 4. Can select all as 
 del triplets
 # === 10. TRAINING FUNCTION ===
 def train_fn(config):
+    if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
+        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
     scaler = GradScaler(enabled=use_amp)
@@ -268,7 +273,9 @@ def train_fn(config):
             }, step=epoch)
 
         if RAY_TUNE_AVAILABLE and USE_RAY_TUNE:
-            tune.report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
+            # tune.report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
+            report({"train_loss": avg_train_loss, "val_mrr": val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}})
+
 
         if val_mrr > best_val_mrr:
             best_val_mrr = val_mrr
@@ -366,6 +373,7 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
     #     name="bpr_hpo",
     #     resources_per_trial={"cpu": 4, "gpu": 0.5}
     # )
+
     tune.run(
         train_with_resources,
         config=RAY_SEARCH_SPACE,

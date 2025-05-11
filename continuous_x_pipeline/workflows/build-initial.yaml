@@ -20,19 +20,27 @@ spec:
           template: git-clone
       - - name: kaniko-build
           template: kaniko
-
+          
   - name: git-clone
+    dnsPolicy: "None"
+    dnsConfig:
+      nameservers:
+        - 8.8.8.8
+        - 1.1.1.1
+
     container:
       image: alpine/git
       command: [sh, -c]
       args:
         - |
+          mkdir /mnt/workspace
           MAX_RETRIES=5
           i=1
-
           while [ $i -le $MAX_RETRIES ]; do
             echo "Attempt $i of $MAX_RETRIES: Cloning repo..."
-            git clone --branch master prohttps://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git /mnt/workspace && break
+            git clone \
+              https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git \
+              /mnt/workspace && break
             echo "Git clone failed. Retrying in 5 seconds..."
             i=$((i + 1))
             sleep 5
@@ -50,8 +58,8 @@ spec:
     container:
       image: gcr.io/kaniko-project/executor:latest
       args:
-        - --dockerfile=/mnt/workspace/Dockerfile
         - --context=/mnt/workspace
+        - --dockerfile=Dockerfile
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0

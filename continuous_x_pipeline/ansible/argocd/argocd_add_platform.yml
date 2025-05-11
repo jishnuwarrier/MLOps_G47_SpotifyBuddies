@@ -49,6 +49,12 @@
       set_fact:
         external_ip: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.56\\..*') | list | first }}"
 
+    - debug:                                   
+        msg: |
+          external_ip = {{ external_ip }}
+          prom_nodeport = {{ prom_nodeport }}
+          graf_nodeport = {{ graf_nodeport }}
+
     - name: Ensure spotifybuddies-platform namespace exists
       command: kubectl get namespace spotifybuddies-platform
       register: ns_check
@@ -104,7 +110,7 @@
         --repo {{ repo_path }} \
         --path {{ app_path }} \
         --dest-server https://kubernetes.default.svc \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd \
@@ -115,7 +121,7 @@
       when: app_check.rc == 0
       command: >
         argocd app set {{ app_name }} \
-        --dest-namespace "" \
+        --dest-namespace spotifybuddies-platform \
         --helm-set-string minio.externalIP={{ external_ip }} \
         --helm-set-string mlflow.externalIP={{ external_ip }} \
         --port-forward --port-forward-namespace=argocd
