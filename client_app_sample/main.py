@@ -1,6 +1,7 @@
 import json
 import asyncio
 import time
+import datetime
 from pathlib import Path
 
 import psycopg2
@@ -90,20 +91,21 @@ async def get_playlists(user_id: int, DB=Depends(get_async_redis_session)):
 
 @app.post("/feedback")
 def send_feedback(req: FeedbackRequestSchema):
+    timestamp = datetime.datetime.now()
     with conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql.SQL("insert into {} values (%s, %s, %s)").format(
+                sql.SQL("insert into {} values (%s, %s, %s, %s)").format(
                     sql.Identifier("user_feedback")
                 ),
-                [req.user_id, req.like_playlist, 1],
+                [timestamp, req.user_id, req.like_playlist, 1],
             )
             for other in req.other_playlists:
                 cur.execute(
-                    sql.SQL("insert into {} values (%s, %s, %s)").format(
+                    sql.SQL("insert into {} values (%s, %s, %s, %s)").format(
                         sql.Identifier("user_feedback")
                     ),
-                    [req.user_id, other, 0],
+                    [timestamp, req.user_id, other, 0],
                 )
 
     return {"msg": "Feedback Sent"}
