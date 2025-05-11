@@ -22,6 +22,12 @@ spec:
           template: kaniko
           
   - name: git-clone
+    dnsPolicy: "None"
+    dnsConfig:
+      nameservers:
+        - 8.8.8.8
+        - 1.1.1.1
+
     container:
       image: alpine/git
       command: [sh, -c]
@@ -31,7 +37,6 @@ spec:
           i=1
           while [ $i -le $MAX_RETRIES ]; do
             echo "Attempt $i of $MAX_RETRIES: Cloning repo..."
-            # CHANGE the line below
             git clone --branch main \
               https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git \
               /mnt/workspace && break
