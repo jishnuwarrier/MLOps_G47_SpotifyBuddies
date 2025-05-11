@@ -19,8 +19,9 @@ app = FastAPI(
     version="0.0.1",
     lifespan=lifespan,
 )
-conn_str = "dbname=client user=postgres password=1234 host=postgres"
-# conn_str = "postgresql+psycopg2://postgres:1234@postgres/client"
+
+time.sleep(15)
+
 if settings.LOCAL:
     templates = Jinja2Templates(directory="templates")
 else:
@@ -64,8 +65,8 @@ class UserResponse(BaseModel):
 
 class FeedbackRequestSchema(BaseModel):
     user_id: int
-    playlist_id: int
-    score: int
+    like_playlist: int
+    other_playlists: list[int]
 
 
 @app.get("/health")
@@ -95,8 +96,15 @@ def send_feedback(req: FeedbackRequestSchema):
                 sql.SQL("insert into {} values (%s, %s, %s)").format(
                     sql.Identifier("user_feedback")
                 ),
-                [req.user_id, req.playlist_id, req.score],
+                [req.user_id, req.like_playlist, 1],
             )
+            for other in req.other_playlists:
+                cur.execute(
+                    sql.SQL("insert into {} values (%s, %s, %s)").format(
+                        sql.Identifier("user_feedback")
+                    ),
+                    [req.user_id, other, 0],
+                )
 
     return {"msg": "Feedback Sent"}
 

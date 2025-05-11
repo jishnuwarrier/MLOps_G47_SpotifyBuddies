@@ -69,7 +69,7 @@
                 alert("User ID is missing");
                 return;
             }
-
+            const otherPlaylists = playlists.filter(id => id !== playlistId);
             const response = await fetch("/feedback", {
                 method: "POST",
                 headers: {
@@ -77,8 +77,8 @@
                 },
                 body: JSON.stringify({
                     user_id: userId,
-                    playlist_id: playlistId,
-                    score: 1
+                    like_playlist: playlistId,
+                    other_playlists: otherPlaylists  // Send Playlist Id of other playlists
                 })
             });
 
