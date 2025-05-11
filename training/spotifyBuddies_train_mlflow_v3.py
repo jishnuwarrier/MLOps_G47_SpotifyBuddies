@@ -23,7 +23,7 @@ import mlflow.pytorch
 import re
 import shutil
 from ray import tune
-from ray.tune import report
+from ray.train import report
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 print("-Imports done. Setting directories now.")
