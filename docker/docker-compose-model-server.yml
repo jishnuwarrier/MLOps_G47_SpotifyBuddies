@@ -23,8 +23,15 @@ services:
       - "5000:80"
     expose:
       - "5000"
+    # Mapping the Model from Object storage inside the docker conatiner
+    volumes:
+      - /mnt/object/inference_data:/app/model_objects
     environment:
       - DEBUG=False
+      - USE_MODEL=True
+      - MODEL_PATH=/app/model_objects/model.pth
+      - MODEL_CONFIG_PATH=/app/model_objects/model_config.json
+      - USER_PLAYLIST_PATH=/app/model_objects/user_to_neighboursPlaylists.pkl
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
