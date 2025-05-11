@@ -41,7 +41,7 @@ case "$run" in
 prod)
     echo "Running Production Only Services"
     # Run only production services (without jupyter and mlflow)
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml up -d
     ;;
 exp)
     echo "Running experiment Only Services"

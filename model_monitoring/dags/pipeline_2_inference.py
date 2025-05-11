@@ -1,5 +1,5 @@
 import asyncio
-import aiohttp # pip install aiohttp
+import aiohttp
 import random
 import pickle
 from airflow import DAG
@@ -8,38 +8,48 @@ from datetime import datetime, timedelta
 
 # === CONFIGURATION ===
 PKL_PATH = "/path/to/users.pkl"  # Your actual pickle path
-ENDPOINT_URL = "http://fastapi_server:80/api/playlist/recommend/"
+ENDPOINT_URL = "http://129.114.25.165:5000/api/playlist/recommend/"
 RUN_INTERVAL_MINUTES = 10
 USERS_PER_RUN = 100
-MAX_DELAY_SECONDS = 480  # 8 minutes delay range, use acc to RUN_INTERVAL_MINUTES
+MAX_DELAY_SECONDS = 480  # 8 minutes delay range
 TIMEOUT_BUFFER = 30      # Additional buffer time
 
 
-# === Load users ===
+# === Load users once ===
 def load_users():
     with open(PKL_PATH, "rb") as f:
         return pickle.load(f)
-    
-users = load_users()
+
+def load_users1():
+    users = []
+    for i in range(100):
+        entry = {}
+        user_ids = [random.randint(1, 10), random.randint(1, 10)]
+        entry['user_ids'] = user_ids
+        users.append(entry)
+    return users
+
+# Global variable to hold the loaded users
+users = load_users1()
 
 
 # === Main simulation function ===
-def simulate_users(**context):
+def simulate_users_random_timing(**context):
     logger = context["ti"].log
-    random.shuffle(users)
+    random.shuffle(users)  # Shuffle once per run to ensure random distribution
     selected_users = users[:USERS_PER_RUN]
     logger.info(f"[{datetime.now()}] Picked {len(selected_users)} users")
 
     async def send_request(user, session, delay):
         await asyncio.sleep(delay)
-        payload = {"user": user}
+        payload = {"user_ids": user['user_ids']}
         try:
             logger.info(f"[{datetime.now()}] Delay={delay:.2f}s Sending: {payload}")
             async with session.post(ENDPOINT_URL, json=payload) as resp:
                 resp_text = await resp.text()
-                logger.info(f"[{datetime.now()}] Response for {user['id']} [{resp.status}]: {resp_text}")
+                logger.info(f"[{datetime.now()}] Response for user [{resp.status}]: {resp_text}")
         except Exception as e:
-            logger.error(f"[{datetime.now()}] Error for {user['id']}: {e}")
+            logger.error(f"[{datetime.now()}] Error for user: {e}")
 
     async def simulate_all():
         async with aiohttp.ClientSession() as session:
@@ -74,7 +84,7 @@ dag = DAG(
 
 simulate_task = PythonOperator(
     task_id='simulate_users',
-    python_callable=simulate_users,
+    python_callable=simulate_users_random_timing,
     provide_context=True,
     dag=dag,
 )
