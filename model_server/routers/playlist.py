@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, BackgroundTasks
 
 from schemas.playlist import PlaylistRequestSchema, PlaylistResponseSchema
@@ -9,9 +11,12 @@ prefix = r"/playlist"
 router = APIRouter(prefix=prefix, tags=["playlist"])
 
 
-def update_prometheus(predictions: dict[int, int]):
-    for prediction in predictions.values():
-        INFERENCE_DIVERSITY.labels(model="playlist_recommender").set(prediction)
+def update_prometheus(predictions: dict[int, list[int]]):
+    for predictions in predictions.values():
+        [
+            INFERENCE_DIVERSITY.labels(model="playlist_recommender").set(prediction)
+            for prediction in predictions
+        ]
 
 
 @router.post("/recommend/")
@@ -23,16 +28,18 @@ async def recommend_playlist(
     """
     Endpoint to get the recommended playlist for users
     """
-    predictions = await get_recommended_playlist(body.user_ids)
-    # # Updating the Redis Cache
-    await cache.hset(name="playlist", mapping=predictions)
+    predictions: dict[int, list[int]] = await get_recommended_playlist(body.user_ids)
+
+    # Updating the Redis Cache
+    redis_payload = {k: json.dumps(v) for k, v in predictions.items()}
+    await cache.hset(name="playlist", mapping=redis_payload)
     # Update Prometheus from BackgroundTasks
     background_task.add_task(update_prometheus, predictions)
 
     INFERENCE_COUNT.inc(amount=len(predictions))
 
     return [
-        PlaylistResponseSchema(user_id=user_id, playlist_id=playlist_id)
-        for user_id, playlist_id in predictions.items()
+        PlaylistResponseSchema(user_id=user_id, playlists=playlists)
+        for user_id, playlists in predictions.items()
     ]
     # return PlaylistResponseSchema(**response_params)
