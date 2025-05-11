@@ -67,7 +67,7 @@ services:
     command: >
       /bin/sh -c "pip install psycopg2-binary boto3 &&
       mlflow server --backend-store-uri postgresql://user:password@postgres/mlflowdb 
-      --artifacts-destination s3://mlflow-artifacts/ --host 0.0.0.0 --port 8000
+      --artifacts-destination s3://mlflow-artifacts/ --host 0.0.0.0 --port 8000"
 
 
   # jupyter:
