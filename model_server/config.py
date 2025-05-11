@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     # ML Model Path
     MODEL_PATH: str = ""
+    MODEL_CONFIG_PATH: str = ""
+    # User Playlist Path
+    USER_PLAYLIST_PATH: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 
