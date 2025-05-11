@@ -53,10 +53,7 @@ cat clouds.yaml
 terraform init
 
 # Set any TF_VARs your configs need
-export TF_VAR_suffix="project_47"
-
-# Set any TF_VARs your configs need
-export TF_VAR_suffix="project_47"
+export TF_VAR_suffix="project47"
 export TF_VAR_key="id_rsa_chameleon"
 
 terraform validate
