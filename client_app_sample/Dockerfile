@@ -19,7 +19,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
-    ADD . /app
+
+ADD . /app
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
@@ -37,7 +38,9 @@ COPY --from=builder --chown=app:app /app /app
 
 
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
@@ -45,6 +48,5 @@ WORKDIR /app
 EXPOSE 80
 
 # Run the FastAPI application by default
-# CMD ["cd", "/app"]
-CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "80","main.py"]
+# CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "80","main.py"]
 
