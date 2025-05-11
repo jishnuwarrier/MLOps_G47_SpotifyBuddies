@@ -60,6 +60,12 @@ FINAL_MODEL_PATH = os.path.join(CHECKPOINT_DIR, 'final_model.pt')
 FINAL_FULL_CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'final_full_checkpoint.pt')
 
 
+if USE_RAY_TUNE:
+    # Avoid heavy artifact logging during tuning
+    LOG_ARTIFACTS = False
+else:
+    LOG_ARTIFACTS = True
+
 # === 4. TRAINING PARAMETERS ===
 print("-Directories done. Setting parameters.")
 EMBEDDING_DIM = 128
@@ -313,7 +319,11 @@ def train_fn(config):
         shutil.copy(FINAL_FULL_CHECKPOINT_PATH, checkpoint_bundle_dir)
 
         # Log the entire folder to MLflow (safer for large files)
-        mlflow.log_artifacts(checkpoint_bundle_dir, artifact_path="checkpoints")
+        if not LOG_ARTIFACTS:
+            mlflow.log_artifacts(checkpoint_bundle_dir, artifact_path="checkpoints")
+        else:
+            mlflow.log_artifact(FINAL_FULL_CHECKPOINT_PATH, artifact_path="checkpoints")
+
 
     with open(MODEL_CONFIG_PATH, 'w') as f:
         json.dump({
@@ -322,7 +332,6 @@ def train_fn(config):
             "num_playlists": NUM_PLAYLISTS,
             "seed": SEED
         }, f)
-
 
 
     if USE_MLFLOW:
