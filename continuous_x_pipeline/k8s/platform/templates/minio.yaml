@@ -9,7 +9,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: 5Gi    #todo - verify
 ---
 apiVersion: apps/v1
 kind: Deployment
