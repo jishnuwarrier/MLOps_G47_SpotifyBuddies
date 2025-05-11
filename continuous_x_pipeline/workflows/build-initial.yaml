@@ -1,9 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: kaniko-pvc-build-
+  generateName: compose-build-
 spec:
-  entrypoint: kaniko-build-flow
+  entrypoint: build-flow
+
   volumeClaimTemplates:
   - metadata:
       name: workdir
@@ -14,19 +15,31 @@ spec:
           storage: 1Gi
 
   templates:
-  - name: kaniko-build-flow
+  - name: build-flow
     steps:
       - - name: clone-repo
           template: git-clone
-      - - name: kaniko-build
-          template: kaniko
-          
+      - - name: compose-build
+          template: compose-build
+
   - name: git-clone
     dnsPolicy: "None"
     dnsConfig:
-      nameservers:
-        - 8.8.8.8
-        - 1.1.1.1
+      nameservers: [8.8.8.8, 1.1.1.1]
+    container:
+      image: alpine/git
+      command: [sh, -c]
+      args: |
+        mkdir -p /mnt/workspace \
+        && for i in 1 2 3 4 5; do
+             echo "Clone attempt $i" ;
+             git clone --depth 1 https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git /mnt/workspace && break ;
+             sleep 5 ;
+           done ;
+        [ -d /mnt/workspace/.git ] || { echo "Clone failed"; exit 1; }
+      volumeMounts:
+        - name: workdir
+          mountPath: /mnt/workspace
 
   - name: compose-build
     sidecars:
@@ -34,50 +47,25 @@ spec:
         image: docker:24-dind
         securityContext:
           privileged: true
+        args: ["--insecure-registry=registry.kube-system.svc.cluster.local:5000"]
         env:
           - name: DOCKER_TLS_CERTDIR
             value: ""
         volumeMounts:
           - name: workdir
             mountPath: /mnt/workspace
-
     container:
-      image: alpine/git
-      command: [sh, -c]
-      args:
-        - |
-          mkdir /mnt/workspace
-          MAX_RETRIES=5
-          i=1
-          while [ $i -le $MAX_RETRIES ]; do
-            echo "Attempt $i of $MAX_RETRIES: Cloning repo..."
-            git clone \
-              https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git \
-              /mnt/workspace && break
-            echo "Git clone failed. Retrying in 5 seconds..."
-            i=$((i + 1))
-            sleep 5
-          done
-
-          if [ ! -d /mnt/workspace/.git ]; then
-            echo "Git clone failed after $MAX_RETRIES attempts."
-            exit 1
-          fi
-      volumeMounts:
-      - name: workdir
-        mountPath: /mnt/workspace
-
-  - name: kaniko
-    container:
-      image: gcr.io/kaniko-project/executor:latest
-      args:
-        - --context=/mnt/workspace
-        - --dockerfile=Dockerfile
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
-        - --insecure
+      name: main
+      image: docker:24-cli
+      env:
+        - name: DOCKER_HOST
+          value: tcp://localhost:2375
+      workingDir: /mnt/workspace
+      command: ["sh", "-c"]
+      args: |
+        chmod +x docker/run_docker_compose.sh &&
+        docker/run_docker_compose.sh --push \
+          --registry registry.kube-system.svc.cluster.local:5000
       volumeMounts:
         - name: workdir
           mountPath: /mnt/workspace
-
