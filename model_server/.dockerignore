@@ -1,1 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+.dockerignore
+Dockerfile
+tests/
+notebooks/
 .venv
