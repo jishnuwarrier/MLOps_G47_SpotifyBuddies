@@ -52,16 +52,16 @@ case "$run" in
 prod)
     echo "Running Production Only Services"
     # Run only production services (without jupyter and mlflow)
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml up -d
     ;;
 exp)
     echo "Running experiment Only Services"
     # Run only experiment services (only jupyter and mlflow with base)
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-experiment.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-experiment.yml up -d
     ;;
 all)
     echo "Running All Services"
     # Run all
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml -f ./docker-compose-experiment.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml -f ./docker-compose-experiment.yml up -d
     ;;
 esac
