@@ -35,7 +35,9 @@ FROM python:3.12-slim-bookworm
 COPY --from=builder --chown=app:app /app /app
 
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 # Expose 80 Port
 EXPOSE 80
