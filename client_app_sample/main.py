@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
@@ -17,6 +18,16 @@ app = FastAPI(
 
 class UserResponse(BaseModel):
     playlist_ids: list[int]
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Endpoint to check if the server is running or not
+    """
+    await asyncio.sleep(1)
+    print(settings)
+    return {"Status": "Server Running"}
 
 
 @app.get("/playlist")
