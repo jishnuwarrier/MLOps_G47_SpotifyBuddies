@@ -1,7 +1,8 @@
 variable "suffix" {
-  description = "Suffix for resource names (use net ID)"
+  description = "Suffix for resource names"
   type        = string
   nullable = false
+  default  = project_47
 }
 
 variable "key" {
@@ -17,4 +18,10 @@ variable "nodes" {
     "node2" = "192.168.1.12"
     "node3" = "192.168.1.13"
   }
+}
+
+variable "data_volume_size" {
+  description = "Size in GB for the persistent data volume"
+  type        = number
+  default     = 50
 }
