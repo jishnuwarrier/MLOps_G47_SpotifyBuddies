@@ -54,7 +54,7 @@ spec:
       image: gcr.io/kaniko-project/executor:latest
       args:
         - --context=/mnt/workspace
-        - --dockerfile=/mnt/workspace/Dockerfile
+        - --dockerfile=Dockerfile
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
