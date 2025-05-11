@@ -1,7 +1,8 @@
 import json
 import asyncio
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from lifespan import lifespan
@@ -14,6 +15,8 @@ app = FastAPI(
     version="0.0.1",
     lifespan=lifespan,
 )
+
+templates = Jinja2Templates(directory="templates")
 
 
 class UserResponse(BaseModel):
@@ -38,3 +41,8 @@ async def get_playlists(user_id: int, DB=Depends(get_async_redis_session)):
         return json.loads(playlist) * 5
 
     return json.loads(playlist)
+
+
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
