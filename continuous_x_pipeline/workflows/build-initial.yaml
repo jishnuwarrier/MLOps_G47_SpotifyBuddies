@@ -43,7 +43,7 @@ spec:
             i=$((i+1))
             sleep 5
           done
-          ls -la /mnt/workspace
+          ls /mnt/workspace
     volumeMounts:
       - name: workdir
         mountPath: /mnt/workspace
