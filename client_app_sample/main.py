@@ -16,7 +16,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-templates = Jinja2Templates(directory="app/templates")
+if settings.LOCAL:
+    templates = Jinja2Templates(directory="templates")
+else:
+    templates = Jinja2Templates(directory="app/templates")
 
 
 class UserResponse(BaseModel):

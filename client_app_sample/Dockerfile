@@ -5,7 +5,8 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Install Utilities
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y curl 
+    apt-get install --no-install-recommends -y curl && \
+    apt-get install -y libpq-dev gcc
 
 # Disable Python downloads, because we want to use the system interpreter
 # across both images. If using a managed Python version, it needs to be
