@@ -28,6 +28,19 @@ spec:
         - 8.8.8.8
         - 1.1.1.1
 
+  - name: compose-build
+    sidecars:
+      - name: dind
+        image: docker:24-dind
+        securityContext:
+          privileged: true
+        env:
+          - name: DOCKER_TLS_CERTDIR
+            value: ""
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/workspace
+
     container:
       image: alpine/git
       command: [sh, -c]
@@ -59,7 +72,7 @@ spec:
       image: gcr.io/kaniko-project/executor:latest
       args:
         - --context=/mnt/workspace
-        # - --dockerfile=Dockerfile
+        - --dockerfile=Dockerfile
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
