@@ -1,21 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: compose-build-
+  generateName: kaniko-pvc-build-
 spec:
-  entrypoint: build-flow
+  entrypoint: compose-build-flow
 
   volumeClaimTemplates:
   - metadata:
       name: workdir
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes: ["ReadWriteOnce"]
       resources:
         requests:
           storage: 1Gi
 
   templates:
-  - name: build-flow
+  - name: compose-build-flow
     steps:
       - - name: clone-repo
           template: git-clone
@@ -25,47 +25,61 @@ spec:
   - name: git-clone
     dnsPolicy: "None"
     dnsConfig:
-      nameservers: [8.8.8.8, 1.1.1.1]
+      nameservers:
+        - 8.8.8.8
+        - 1.1.1.1
     container:
       image: alpine/git
       command: [sh, -c]
-      args: |
-        mkdir -p /mnt/workspace \
-        && for i in 1 2 3 4 5; do
-             echo "Clone attempt $i" ;
-             git clone --depth 1 https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git /mnt/workspace && break ;
-             sleep 5 ;
-           done ;
-        [ -d /mnt/workspace/.git ] || { echo "Clone failed"; exit 1; }
+      args:
+        - |
+          mkdir -p /mnt/workspace
+          MAX_RETRIES=5
+          i=1
+          while [ $i -le $MAX_RETRIES ]; do
+            echo "Attempt $i of $MAX_RETRIES: Cloning repo..."
+            git clone https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git /mnt/workspace && break
+            echo "Git clone failed. Retrying in 5 seconds..."
+            i=$((i+1))
+            sleep 5
+          done
+          if [ ! -d /mnt/workspace/.git ]; then
+            echo "Git clone failed after $MAX_RETRIES attempts."
+            exit 1
+          fi
+    volumeMounts:
+      - name: workdir
+        mountPath: /mnt/workspace
+
+  - name: compose-build
+    container:
+      name: main
+      image: docker:24-cli
+      workingDir: /mnt/workspace
+      env:
+        - name: DOCKER_HOST
+          value: tcp://localhost:2375
+      command: [sh, -c]
+      args:
+        - |
+          chmod +x docker/run_docker_compose.sh
+          ./docker/run_docker_compose.sh \
+            --push \
+            --registry registry.kube-system.svc.cluster.local:5000
       volumeMounts:
         - name: workdir
           mountPath: /mnt/workspace
 
-  - name: compose-build
     sidecars:
       - name: dind
         image: docker:24-dind
         securityContext:
           privileged: true
-        args: ["--insecure-registry=registry.kube-system.svc.cluster.local:5000"]
+        command: ["dockerd"]
+        args:
+          - --host=tcp://0.0.0.0:2375
+          - --insecure-registry=registry.kube-system.svc.cluster.local:5000
         env:
           - name: DOCKER_TLS_CERTDIR
-            value: ""
+            value: "" 
         volumeMounts:
-          - name: workdir
-            mountPath: /mnt/workspace
-    container:
-      name: main
-      image: docker:24-cli
-      env:
-        - name: DOCKER_HOST
-          value: tcp://localhost:2375
-      workingDir: /mnt/workspace
-      command: ["sh", "-c"]
-      args: |
-        chmod +x docker/run_docker_compose.sh &&
-        docker/run_docker_compose.sh --push \
-          --registry registry.kube-system.svc.cluster.local:5000
-      volumeMounts:
-        - name: workdir
-          mountPath: /mnt/workspace
