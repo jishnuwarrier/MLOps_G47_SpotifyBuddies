@@ -16,7 +16,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 class UserResponse(BaseModel):
@@ -29,7 +29,6 @@ async def health_check():
     Endpoint to check if the server is running or not
     """
     await asyncio.sleep(1)
-    print(settings)
     return {"Status": "Server Running"}
 
 
