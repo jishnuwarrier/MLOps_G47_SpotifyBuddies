@@ -12,6 +12,9 @@ services:
       - "6379:6379"  # Ray cluster comm
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
@@ -33,6 +36,9 @@ services:
       ray start --address=ray-head:6379 --block"
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
     volumes:
       - ./ray_data:/mnt/data
     shm_size: "4g"
@@ -52,6 +58,9 @@ services:
       - "8888:8888"
     environment:
       - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
       - OBJECT_DATA_DIR=/mnt/data
     volumes:
       - ~/MLOps_G47_SpotifyBuddies:/home/jovyan/work
@@ -64,5 +73,6 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
 
 
