@@ -11,8 +11,9 @@ Original file is located at
 import torch
 import json
 import os
+import pickle
 
-# === 2. Setup Directories (modify as needed) ===
+# === 2. Setup Directories ===
 USER_TO_PLAYLISTS_PATH = "/content/drive/MyDrive/datasets/main_datasets/user_playlist_match/user_to_neighboursPlaylists.pkl"
 MODEL_WEIGHTS_PATH = "/content/drive/MyDrive/models/model.pth"
 MODEL_CONFIG_PATH = "/content/drive/MyDrive/models/model_config.json"
@@ -48,30 +49,67 @@ def rank_playlists_for_user(user_id, top_k=10):
     top_indices = torch.topk(scores, k=min(top_k, len(candidate_playlists))).indices
     return [candidate_playlists[i] for i in top_indices]
 
-# === 8. Example usage ===
+# Example usage
 example_user = 42
-top_playlists = rank_playlists_for_user(example_user, top_k=5)
+top_playlists = rank_playlists_for_user(example_user, top_k=10)
 print(f"Top playlists for user {example_user}:", top_playlists)
 
-import random
-import time
+# === 8. Define a batched inference function ===
+# Define a batched inference function
+def rank_playlists_for_users(user_ids: list[int], top_k=10):
+    all_user_ids = []
+    all_playlist_ids = []
+    slice_bounds = []  # (user_id, start_idx, end_idx)
 
-# === 1. Select 100 random users from mapping ===
-all_users = list(user_to_playlists.keys())
-sample_users = random.sample(all_users, 100)
+    # === 1. Prepare batched inputs ===
+    for user_id in user_ids:
+        playlists = user_to_playlists.get(user_id, [])
+        if playlists:
+            start = len(all_user_ids)
+            all_user_ids.extend([user_id] * len(playlists))
+            all_playlist_ids.extend(playlists)
+            end = len(all_user_ids)
+            slice_bounds.append((user_id, start, end))
+        else:
+            slice_bounds.append((user_id, None, None))  # No playlists
 
-# === 2. Measure latency per inference ===
-latencies = []
+    if not all_user_ids:
+        return {user_id: [] for user_id in user_ids}
 
-for user_id in sample_users:
-    start = time.perf_counter()
-    _ = rank_playlists_for_user(user_id, top_k=10)
-    end = time.perf_counter()
-    latencies.append((end - start) * 1000)  # ms
+    # === 2. Score all (user, playlist) pairs at once ===
+    user_tensor = torch.LongTensor(all_user_ids)
+    playlist_tensor = torch.LongTensor(all_playlist_ids)
+    with torch.no_grad():
+        scores = model.score(user_tensor, playlist_tensor)  # Shape: [total_pairs]
 
-# === 3. Report results ===
-avg_latency = sum(latencies) / len(latencies)
-print(f"Inference latency over {len(latencies)} users:")
-print(f"- Average: {avg_latency:.2f} ms")
-print(f"- Min: {min(latencies):.2f} ms")
-print(f"- Max: {max(latencies):.2f} ms")
+    # === 3. Rank top-k per user using precomputed slices ===
+    result = {}
+    for user_id, start, end in slice_bounds:
+        if start is None:
+            result[user_id] = []
+        else:
+            user_scores = scores[start:end]
+            user_playlists = all_playlist_ids[start:end]
+            topk = min(top_k, len(user_scores))
+            top_indices = torch.topk(user_scores, k=topk).indices
+            result[user_id] = [user_playlists[i] for i in top_indices]
+
+    return result
+
+## Example usage
+
+test_user_ids = [42, 58, 90]
+
+# Call the batched inference function
+ranked_results = rank_playlists_for_users(test_user_ids, top_k=5)
+
+# Print results
+print("\n--- Batched Inference Results ---")
+for user_id in test_user_ids:
+    playlists = ranked_results.get(user_id, [])
+    if playlists:
+        print(f"User {user_id} → Top-{len(playlists)} Playlists: {playlists}")
+    else:
+        print(f"User {user_id} → No candidate playlists available.")
+
+print (ranked_results)

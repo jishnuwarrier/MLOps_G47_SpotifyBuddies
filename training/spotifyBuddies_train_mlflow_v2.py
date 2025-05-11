@@ -66,7 +66,7 @@ EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
 GRAD_ACCUM_STEPS = 2
 LEARNING_RATE = 0.005
-EPOCHS = 3
+EPOCHS = 1
 EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
@@ -211,7 +211,7 @@ def train_fn(config):
     if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
         os.makedirs(CHECKPOINT_DIR, exist_ok=True)
         os.makedirs(OUTPUT_DIR, exist_ok=True)
-        
+
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
     scaler = GradScaler(enabled=use_amp)
@@ -361,7 +361,7 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
 
     train_with_resources = tune.with_resources(
         train_fn,
-        resources={"cpu": 4, "gpu": 0.5}  # We should get two workers sharing the GPU
+        resources={"cpu": 8, "gpu": 0.5}  # We should get two workers sharing the GPU
     )
 
     # tune.run(
