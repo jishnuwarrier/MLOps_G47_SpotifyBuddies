@@ -177,3 +177,4 @@
 - Infrastructure as code
     - The infrastructure will be provisioned using Ansible and Helm
     - Infrastructure will follow immutable infrastructure principles—changes are only made by updating configuration and redeploying
+
