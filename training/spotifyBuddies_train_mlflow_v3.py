@@ -397,7 +397,7 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
         mode="max",
         num_samples=RAY_NUM_SAMPLES,
         name="bpr_hpo",
-        local_dir="~/ray_results",      # Optional if already default
+        storage_path="~/ray_results",   # Replaces local_dir
         resume="AUTO"
     )
 
