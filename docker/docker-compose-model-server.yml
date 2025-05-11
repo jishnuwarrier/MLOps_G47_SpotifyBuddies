@@ -86,7 +86,7 @@ services:
     expose:
       - "7000"
     environment:
-      - DEBUG=True
+      - DEBUG=False
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
