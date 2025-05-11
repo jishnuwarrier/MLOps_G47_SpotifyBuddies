@@ -6,9 +6,18 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alibi-detect>=0.12.0",
-    "fastapi[all]>=0.115.12",
-    "locust>=2.36.2",
+    "fastapi[standard]>=0.115.12",
     "prometheus-fastapi-instrumentator>=7.1.0",
+    "pydantic-settings>=2.9.1",
     "redis>=5.2.1",
     "torch>=2.7.0",
 ]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+

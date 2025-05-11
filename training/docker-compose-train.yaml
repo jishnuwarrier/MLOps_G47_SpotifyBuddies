@@ -1,0 +1,78 @@
+name: SB_gpu_train
+
+services:
+  ray-head:
+    image: rayproject/ray:2.42.0-gpu
+    container_name: ray-head
+    command: >
+      bash -c "
+      ray start --head --port=6379 --dashboard-host=0.0.0.0 --block"
+    ports:
+      - "8265:8265"  # Ray dashboard
+      - "6379:6379"  # Ray cluster comm
+    environment:
+      - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
+    volumes:
+      - ./ray_data:/mnt/data
+    shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ray-worker:
+    image: rayproject/ray:2.42.0-gpu
+    container_name: ray-worker
+    depends_on:
+      - ray-head
+    command: >
+      bash -c "
+      ray start --address=ray-head:6379 --block"
+    environment:
+      - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
+    volumes:
+      - ./ray_data:/mnt/data
+    shm_size: "4g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  jupyter:
+    image: jupyter-mlflow
+    container_name: jupyter
+    restart: always
+    ports:
+      - "8888:8888"
+    environment:
+      - MLFLOW_TRACKING_URI=http://129.114.27.215:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://129.114.27.215:9000
+      - AWS_ACCESS_KEY_ID=your-access-key
+      - AWS_SECRET_ACCESS_KEY=your-secret-key
+      - OBJECT_DATA_DIR=/mnt/data
+    volumes:
+      - ~/MLOps_G47_SpotifyBuddies:/home/jovyan/work
+      - /mnt/object:/mnt/data:ro
+    shm_size: "16g"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+
+

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Playlist Recommender</title>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1em;
+            margin-top: 20px;
+        }
+        .item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+        button {
+            margin: 5px 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Get Playlist Recommendations</h1>
+
+    <label for="user_id">Enter User ID:</label>
+    <input type="number" id="user_id" name="user_id" min="1">
+    <button onclick="fetchRecommendations()">Get Recommendations</button>
+
+    <div id="responseGrid" class="grid"></div>
+
+    <script>
+        async function fetchRecommendations() {
+            const userId = document.getElementById("user_id").value;
+            if (!userId) {
+                alert("Please enter a user ID");
+                return;
+            }
+
+            const response = await fetch(`/playlist/?user_id=${userId}`, {
+                method: "GET",
+            });
+
+            const data = await response.json();
+            const grid = document.getElementById("responseGrid");
+            grid.innerHTML = "";
+
+            if (data.length === 0) {
+                grid.innerHTML = "<p>No playlists found.</p>";
+                return;
+            }
+
+            const playlists = data
+            playlists.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "item";
+                div.innerHTML = `
+                    <div>${item}</div>
+                    <button onclick="handleFeedback(${item}, 'like')">👍</button>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        async function handleFeedback(playlistId) {
+            const userId = document.getElementById("user_id").value;
+            if (!userId) {
+                alert("User ID is missing");
+                return;
+            }
+
+            const response = await fetch("/feedback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    playlist_id: playlistId
+                })
+            });
+
+            if (response.ok) {
+                alert("Feedback sumitted");
+                console.log(`Feedback submitted for playlist ${playlistId}`);
+            } else {
+                console.error("Failed to submit feedback");
+            }
+        }
+
+    </script>
+</body>
+</html>
+

@@ -54,7 +54,7 @@ class Recommender(metaclass=Singleton):
         )
         # return torch.tensor([user_id], dtype=torch.float32).to(self.device)
 
-    def predict(self, user_ids: list[int]) -> dict[int, int]:
+    def predict(self, user_ids: list[int]) -> dict[int, list[int]]:
         """
         Make Prediction using the model with the input
         """
@@ -64,6 +64,8 @@ class Recommender(metaclass=Singleton):
 
         with torch.inference_mode():
             recommendations = self._model(input).reshape(-1).cpu().tolist()
+            if not settings.USE_MODEL:
+                recommendations = [[rec] for rec in recommendations]
             # recommendations = self._model(input).cpu().item()
 
         # Create a dictionary of user_ids as key and playlist_id as value

@@ -4,7 +4,7 @@
   become: yes
   vars:
     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    repo_dest: /tmp/spotifybuddies
+    repo_dest: /tmp/spotifybuddies/continuous_x_pipeline/
     workflow_dir: workflows
     argo_namespace: argo
     templates:

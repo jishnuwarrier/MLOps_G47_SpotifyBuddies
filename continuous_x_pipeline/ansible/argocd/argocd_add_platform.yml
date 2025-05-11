@@ -6,17 +6,19 @@
     argocd_username: "admin"
     repo_path: "https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git"
     app_name: "spotifybuddies-platform"
-    app_path: "k8s/platform"
+    app_path: "continuous_x_pipeline/k8s/platform"
     minio_access_key: "your-access-key"
 
     prom_app: "spotifybuddies-prometheus"
-    prom_path: "k8s/monitoring/prometheus"
+    prom_path: "continuous_x_pipeline/k8s/monitoring/prometheus"
     graf_app: "spotifybuddies-grafana"
-    graf_path: "k8s/monitoring/grafana"
+    graf_path: "continuous_x_pipeline/k8s/monitoring/grafana"
 
-    prom_nodeport: "9090"
-    graf_nodeport: "3000"
+    external_port_prom: "9090"
+    external_port_graf: "3000"
 
+    prom_nodeport: "{{ external_port_prom }}"
+    graf_nodeport: "{{ external_port_graf }}"
     grafana_admin_pw: "grafana-admin"
 
   tasks:
@@ -31,27 +33,13 @@
       register: argocd_password
 
     - name: Log in to ArgoCD
-      environment:
-        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
       command: >
         argocd login localhost --username {{ argocd_username }} \
         --password "{{ argocd_password.stdout }}" --grpc-web --port-forward --port-forward-namespace=argocd
       register: login_result
       changed_when: false
 
-    - name: Log in to ArgoCD (locally)
-      delegate_to: localhost
-      run_once: true
-      environment:
-        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
-      command: >
-        argocd login localhost --username {{ argocd_username }}
-          --password "{{ argocd_password.stdout }}"
-          --grpc-web --port-forward --port-forward-namespace=argocd
-
     - name: Add repository to ArgoCD
-      delegate_to: localhost
-      run_once: true
       command: >
         argocd repo add {{ repo_path }} --port-forward --port-forward-namespace=argocd
       register: repo_result
@@ -60,6 +48,12 @@
     - name: Detect external IP starting with 10.56
       set_fact:
         external_ip: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.56\\..*') | list | first }}"
+
+    - debug:                                   
+        msg: |
+          external_ip = {{ external_ip }}
+          prom_nodeport = {{ prom_nodeport }}
+          graf_nodeport = {{ graf_nodeport }}
 
     - name: Ensure spotifybuddies-platform namespace exists
       command: kubectl get namespace spotifybuddies-platform
@@ -202,4 +196,3 @@
           --helm-set-string service.nodePort={{ graf_nodeport }} \
           --helm-set-string adminPassword={{ grafana_admin_pw }} \
           --port-forward --port-forward-namespace=argocd
-

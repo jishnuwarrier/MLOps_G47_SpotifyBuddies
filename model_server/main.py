@@ -15,7 +15,7 @@ from lifespan import lifespan
 app = FastAPI(
     title="ML Model Inference Service",
     description="This service to expose the API endpoint to interact with the model",
-    version="1.0.0",
+    version="0.0.1",
     lifespan=lifespan,
 )
 

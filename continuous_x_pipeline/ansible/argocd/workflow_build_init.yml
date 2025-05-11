@@ -1,27 +1,29 @@
+# - name: Run Argo Workflow from GitHub Repo
+#   hosts: node1
+#   become: yes
+#   vars:
+#     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
+#     repo_dest: /tmp/spotifybuddies/
+#     workflow_file: continuous_x_pipeline/workflows/build-initial.yaml   
+#     workflow_name: build-initial
+#     argo_namespace: argo
+
+#   tasks:
+#     - name: Clone or update spotifybuddies repo
+#       git:
+#         repo: "{{ repo_url }}"
+#         dest: "{{ repo_dest }}"
+#         version: main
+#         update: yes
+#         force: yes
+
 - name: Run Argo Workflow from GitHub Repo
   hosts: node1
   become: yes
   vars:
     repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    repo_dest: /tmp/spotifybuddies
-    workflow_file: workflows/build-initial.yaml   
-    workflow_name: build-initial
-    argo_namespace: argo
-
-  tasks:
-    - name: Clone or update spotifybuddies repo
-      git:
-        repo: "{{ repo_url }}"
-        dest: "{{ repo_dest }}"
-        version: main   
-
-- name: Run Argo Workflow from GitHub Repo
-  hosts: node1
-  become: yes
-  vars:
-    repo_url: https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git
-    repo_dest: /tmp/spotifybuddies
-    workflow_file: workflows/build-initial.yaml   
+    repo_dest: /tmp/spotifybuddies/
+    workflow_file: continuous_x_pipeline/workflows/build-initial.yaml   
     workflow_name: build-initial
     argo_namespace: argo
 

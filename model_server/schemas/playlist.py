@@ -9,4 +9,4 @@ class PlaylistRequestSchema(BaseModel):
 
 class PlaylistResponseSchema(BaseModel):
     user_id: int
-    playlist_id: int
+    playlists: list[int]

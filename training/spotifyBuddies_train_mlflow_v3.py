@@ -23,7 +23,7 @@ import mlflow.pytorch
 import re
 import shutil
 from ray import tune
-from ray.tune import report
+from ray.train import report
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 print("-Imports done. Setting directories now.")
@@ -213,14 +213,20 @@ SELECTED_VAL_SLICES = [0] #Select slices among 0, 1, 2, 3, 4. Can select all as 
 del triplets
 # === 10. TRAINING FUNCTION ===
 def train_fn(config):
-    if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
-        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
-        os.makedirs(OUTPUT_DIR, exist_ok=True)
-    LOG_ARTIFACTS = not (USE_RAY_TUNE and RAY_TUNE_AVAILABLE)
+    import mlflow
+    import os
 
+    # === SAFEGUARD: Setup flags and directories ===
+    LOG_ARTIFACTS = not (USE_RAY_TUNE and RAY_TUNE_AVAILABLE)
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # === Model + optimizer ===
     model = BPRModel(NUM_USERS, NUM_PLAYLISTS, config["embedding_dim"]).to(device)
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=config["learning_rate"])
     scaler = GradScaler(enabled=use_amp)
+
+    # === Load training data ===
     triplets = torch.load(config["triplet_path"])
     train_loader = DataLoader(
         BPRTripletDataset(triplets),
@@ -235,6 +241,7 @@ def train_fn(config):
     best_val_mrr = -1
     patience_counter = 0
 
+    # === Setup MLflow ===
     if USE_MLFLOW:
         mlflow.set_tracking_uri("http://129.114.27.215:8000")
         mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
@@ -242,6 +249,7 @@ def train_fn(config):
         mlflow.log_params(config)
         mlflow.set_tags(MLFLOW_TAGS)
 
+    # === Training Loop ===
     for epoch in range(start_epoch, EPOCHS + 1):
         model.train()
         total_loss = 0
@@ -268,8 +276,8 @@ def train_fn(config):
         avg_train_loss = total_loss / len(train_loader)
         val_hit_rates, val_mrr = evaluate_ranking(model, base_dir=config["val_batch_dir"], slice_id=SELECTED_VAL_SLICES)
 
-        hit_str = " | ".join([f"Hit@{k}: {val_hit_rates[k]:.4f}" for k in sorted(val_hit_rates)])
-        print(f"➡️➡️ Epoch {epoch} | Loss: {avg_train_loss:.4f} | Val MRR: {val_mrr:.4f} | {hit_str}")
+        print(f"\u27a1\u27a1 Epoch {epoch} | Loss: {avg_train_loss:.4f} | Val MRR: {val_mrr:.4f} | " +
+              " | ".join([f"Hit@{k}: {val_hit_rates[k]:.4f}" for k in sorted(val_hit_rates)]))
 
         if USE_MLFLOW:
             mlflow.log_metrics({
@@ -278,11 +286,10 @@ def train_fn(config):
                 **{f"hit-{k}": val_hit_rates[k] for k in val_hit_rates}
             }, step=epoch)
 
-        if RAY_TUNE_AVAILABLE and USE_RAY_TUNE:
-            # tune.report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
-            report({"train_loss": avg_train_loss, "val_mrr": val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}})
+        if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
+            report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
 
-
+        # === Save best model ===
         if val_mrr > best_val_mrr:
             best_val_mrr = val_mrr
             patience_counter = 0
@@ -300,6 +307,7 @@ def train_fn(config):
                     mlflow.log_metric("early_stopping_epoch", epoch)
                 break
 
+    # === Save Final Model ===
     torch.save(model.state_dict(), FINAL_MODEL_PATH)
     torch.save({
         "epoch": epoch,
@@ -309,49 +317,36 @@ def train_fn(config):
         "best_val_mrr": best_val_mrr
     }, FINAL_FULL_CHECKPOINT_PATH)
 
-
-    if USE_MLFLOW:
-        # Create a temp directory to hold the artifact (bc log_artifacs() is made to send folders (not files) to MLFlow)
+    if USE_MLFLOW and LOG_ARTIFACTS:
+        # Prepare checkpoint folder and log
         checkpoint_bundle_dir = os.path.join(OUTPUT_DIR, "checkpoint_bundle")
         os.makedirs(checkpoint_bundle_dir, exist_ok=True)
-
-        # Copy the checkpoint file to this directory
         shutil.copy(FINAL_FULL_CHECKPOINT_PATH, checkpoint_bundle_dir)
+        mlflow.log_artifacts(checkpoint_bundle_dir, artifact_path="checkpoints")
 
-        # Log the entire folder to MLflow (safer for large files)
-        if not LOG_ARTIFACTS:
-            mlflow.log_artifacts(checkpoint_bundle_dir, artifact_path="checkpoints")
-        else:
-            mlflow.log_artifact(FINAL_FULL_CHECKPOINT_PATH, artifact_path="checkpoints")
+        # Save model config
+        with open(MODEL_CONFIG_PATH, 'w') as f:
+            json.dump({
+                "embedding_dim": config["embedding_dim"],
+                "num_users": NUM_USERS,
+                "num_playlists": NUM_PLAYLISTS,
+                "seed": SEED
+            }, f)
+        mlflow.log_artifact(MODEL_CONFIG_PATH)
 
-
-    with open(MODEL_CONFIG_PATH, 'w') as f:
-        json.dump({
-            "embedding_dim": config["embedding_dim"],
-            "num_users": NUM_USERS,
-            "num_playlists": NUM_PLAYLISTS,
-            "seed": SEED
-        }, f)
-
-
-    if USE_MLFLOW:
+        # Save model + run metadata
         mlflow.pytorch.log_model(model, artifact_path="final_model")
-
         run_id = mlflow.active_run().info.run_id
         with open("last_run_id.txt", "w") as f:
             f.write(run_id)
         mlflow.log_artifact("last_run_id.txt")
 
-        # Log model architecture/config file
-        if os.path.exists(MODEL_CONFIG_PATH):
-            mlflow.log_artifact(MODEL_CONFIG_PATH)
-
-        # Log full training config
         with open("training_config.json", "w") as f:
             json.dump(config, f, indent=2)
         mlflow.log_artifact("training_config.json")
 
         mlflow.end_run()
+
 
 
 
@@ -370,7 +365,7 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
 
     train_with_resources = tune.with_resources(
         train_fn,
-        resources={"cpu": 8, "gpu": 0.5}  # We should get two workers sharing the GPU
+        resources={"cpu": 4, "gpu": 0.5}  # We should get two workers sharing the GPU
     )
 
     # tune.run(

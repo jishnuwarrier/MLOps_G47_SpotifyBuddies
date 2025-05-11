@@ -69,3 +69,32 @@ services:
       - "--config=/etc/grafana/grafana.ini"
     networks:
       - production_net
+
+  client:
+    build:
+      context: ../client_app_sample/
+      dockerfile: Dockerfile
+    container_name: client_server
+    command: "fastapi run --host 0.0.0.0 --port 80 /app/main.py"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    ports:
+      - "7000:80"
+    expose:
+      - "7000"
+    environment:
+      - DEBUG=False
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - production_net
+
+networks:
+  production_net:
+    external: true
+

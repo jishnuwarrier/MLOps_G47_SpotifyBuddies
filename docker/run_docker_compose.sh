@@ -9,6 +9,17 @@ usage() {
     exit 1
 }
 
+# Create production_net network name (if it doesn't exist)
+NETWORK_NAME="production_net"
+
+# Check if the network exists
+if ! docker network ls --format '{{.Name}}' | grep -q "^${NETWORK_NAME}$"; then
+    echo "Network '${NETWORK_NAME}' not found. Creating it..."
+    docker network create "${NETWORK_NAME}"
+else
+    echo "Network '${NETWORK_NAME}' already exists."
+fi
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -46,11 +57,11 @@ prod)
 exp)
     echo "Running experiment Only Services"
     # Run only experiment services (only jupyter and mlflow with base)
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-experiment.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-experiment.yml up -d
     ;;
 all)
     echo "Running All Services"
     # Run all
-    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml -f ./docker-compose-experiment.yml up
+    docker compose -f ./docker-compose-base.yaml -f ./docker-compose-airflow.yml -f ./docker-compose-model-server.yml -f ./docker-compose-experiment.yml up -d
     ;;
 esac
