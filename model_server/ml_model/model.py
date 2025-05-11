@@ -55,7 +55,11 @@ class Recommender(metaclass=Singleton):
         """
         # Load trained model
         if settings.USE_MODEL:
-            self._model = torch.jit.load(path, map_location=self.device)
+            self._model = torch.load(
+                path,
+                map_location=self.device,
+                weights_only=False,
+            )
         else:
             self._model = SimpleRecommender()
             with torch.no_grad():
@@ -66,7 +70,7 @@ class Recommender(metaclass=Singleton):
         self._model.eval()
 
         # TorchScript Optimization
-        self._model = torch.jit.freeze(self._model)
+        # self._model = torch.jit.freeze(self._model)
 
     def score(self, user_ids, playlist_ids):
         u = self._model.user_embeddings(user_ids)
