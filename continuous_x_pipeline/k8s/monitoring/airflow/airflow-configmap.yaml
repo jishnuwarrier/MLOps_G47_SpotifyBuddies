@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  namespace: spotifybuddies-monitoring
+data:
+  airflow.cfg: |
+    [core]
+    dags_folder = /opt/airflow/dags
+    # Postgres metadata DB in same namespace:
+    sql_alchemy_conn = postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+
+    # Use CeleryExecutor with Redis broker (adjust password if you set one)
+    executor = CeleryExecutor
+    broker_url = broker_url = redis://spotifybuddies-redis.redis.svc.cluster.local:6379/0
+    result_backend = db+postgresql://airflow:airflow@airflow-postgres:5432/airflow
+
+    load_examples = False
