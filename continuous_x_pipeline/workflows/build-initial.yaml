@@ -33,6 +33,7 @@ spec:
       command: [sh, -c]
       args:
         - |
+          mkdir /mnt/workspace
           MAX_RETRIES=5
           i=1
           while [ $i -le $MAX_RETRIES ]; do
