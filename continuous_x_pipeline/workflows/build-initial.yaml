@@ -33,6 +33,9 @@ spec:
       command: [sh, -c]
       args:
         - |
+          echo "---- PWD ----"; pwd
+          echo "---- TOP LEVEL ----"; ls -al
+          echo "---- LOOK FOR SCRIPT ----"
           mkdir -p /mnt/workspace
           MAX_RETRIES=5
           i=1
@@ -62,6 +65,10 @@ spec:
       command: [sh, -c]
       args:
         - |
+          echo "---- PWD ----"; pwd
+          echo "---- TOP LEVEL ----"; ls -al
+          echo "---- LOOK FOR SCRIPT ----"
+          find /mnt/workspace -maxdepth 2 -name 'run_docker_compose.sh' || true
           chmod +x docker/run_docker_compose.sh
           ./docker/run_docker_compose.sh \
             --push \
