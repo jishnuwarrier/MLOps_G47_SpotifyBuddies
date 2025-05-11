@@ -23,8 +23,7 @@ import mlflow.pytorch
 import re
 import shutil
 from ray import tune
-from ray.train import report
-
+from ray.tune import report
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 print("-Imports done. Setting directories now.")
@@ -92,7 +91,7 @@ except ImportError:
     RAY_TUNE_AVAILABLE = False
     print("Ray Tune not available!")
 
-RAY_NUM_SAMPLES = 6
+RAY_NUM_SAMPLES = 4
 RAY_SEARCH_SPACE = {
     "embedding_dim": tune.choice([64, 128]) if RAY_TUNE_AVAILABLE else EMBEDDING_DIM,
     "learning_rate": tune.loguniform(1e-4, 1e-2) if RAY_TUNE_AVAILABLE else LEARNING_RATE,
