@@ -236,7 +236,7 @@ For each validation positive sample:
 
 ## 3) BPR Model Training Jobs with MLFlow and Ray Tune
 
-[BPR_script](training/spotifyBuddies_train_mlflow_v3.py)
+[BPR_script](./training/spotifyBuddies_train_mlflow_v3.py)
 
 - For training the BPR Model we implemented a training script that incorprated MLFlow and Ray Tune. We have two main runs: one with MLFlow only, and then another using Ray Tune.
 
