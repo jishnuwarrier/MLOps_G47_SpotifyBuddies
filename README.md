@@ -182,7 +182,7 @@ This model learns user and playlist embeddings, that will capture both user’s 
 - BPR will compute a dot product between the embeddings, this is the score:
 
 $$
-\text{score}_{u,i} = \boldsymbol{u}^\top \cdot \boldsymbol{i}, \quad \text{score}_{u,j} = \boldsymbol{u}^\top \cdot \boldsymbol{j}
+\text{score}_{u,i} = \boldsymbol{u}^\top \cdot \boldsymbol{i}
 $$
 
 
