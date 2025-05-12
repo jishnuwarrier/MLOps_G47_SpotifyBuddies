@@ -1,5 +1,4 @@
 import pickle
-import json
 from collections import Counter
 from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
@@ -21,26 +20,28 @@ class SimpleRecommender(nn.Module):
         return self.linear(x)
 
 
-with open(settings.MODEL_CONFIG_PATH, "r") as f:
-    model_config = json.load(f)
+# NOTE -> In Real Actual system, we would be fetching the
+# User to Playlist from a datasource/database (Spotify uses vector database)
+# This is the output from User Pairing which is then mapped to
+# the actual playlists that belong to neighbours
+if settings.USE_MODEL:
+    with open(settings.USER_PLAYLIST_PATH, "rb") as f:
+        user_to_playlists = pickle.load(f)
+        print("User-Playlist-Loaded")
 
-with open(settings.USER_PLAYLIST_PATH, "rb") as f:
-    user_to_playlists = pickle.load(f)
-    print("User-Playlist-Loaded")
+    playlist_counter = Counter()
+    for playlists in user_to_playlists.values():
+        playlist_counter.update(playlists)
 
-playlist_counter = Counter()
-for playlists in user_to_playlists.values():
-    playlist_counter.update(playlists)
+    # Step 2: Score each user by the *total popularity* of their playlists
+    user_scores = {
+        user: sum(playlist_counter[p] for p in playlists)
+        for user, playlists in user_to_playlists.items()
+    }
 
-# Step 2: Score each user by the *total popularity* of their playlists
-user_scores = {
-    user: sum(playlist_counter[p] for p in playlists)
-    for user, playlists in user_to_playlists.items()
-}
-
-# Step 3: Find user with highest popularity score
-mainstream_user_id = max(user_scores.items(), key=lambda x: x[1])[0]
-print(f"Most mainstream user: {mainstream_user_id}")
+    # Step 3: Find user with highest popularity score
+    mainstream_user_id = max(user_scores.items(), key=lambda x: x[1])[0]
+    print(f"Most mainstream user: {mainstream_user_id}")
 
 
 @dataclass
@@ -136,28 +137,6 @@ class Recommender(metaclass=Singleton):
 
         return result
 
-    # def predict(self, user_ids: list[int]) -> dict[int, list[int]]:
-    #     """
-    #     Make Prediction using the model with the input
-    #     """
-    #
-    #     # Preprocess the input
-    #     input = self.preprocess(user_ids)
-    #
-    #     with torch.inference_mode():
-    #         recommendations = self._model(input).reshape(-1).cpu().tolist()
-    #         if not settings.USE_MODEL:
-    #             recommendations = [[rec] for rec in recommendations]
-    #         # recommendations = self._model(input).cpu().item()
-    #
-    #     # Create a dictionary of user_ids as key and playlist_id as value
-    #     results = {
-    #         user_id: playlist_id
-    #         for user_id, playlist_id in zip(user_ids, recommendations)
-    #     }
-    #
-    #     return results
-
 
 pool = None
 model = Recommender()
@@ -171,5 +150,7 @@ def intialize_model():
     print("Intialize Child Process for ML inference")
 
 
-def make_prediction(user_id: [int]) -> list[int]:
+def make_prediction(user_id: list[int]) -> list[int]:
+    if not settings.USE_MODEL:
+        return {user: [user + i for i in range(5)] for user in user_id}
     return model.predict(user_id)
