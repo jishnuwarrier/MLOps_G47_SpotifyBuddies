@@ -260,9 +260,9 @@ Max playlists liked per user: 4,339.00
         
         Measures the average of the reciprocal ranks of the true positive in the ranked list. A higher MRR means the model is ranking positives closer to the top.
         
-        $$
-        \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
-        $$
+    $$
+    \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
+    $$
         
 
     - **Hit@K:**
