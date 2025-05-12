@@ -442,8 +442,11 @@ Our specific customer is Spotify. Based on our customer, we did a requirement an
 ## [Partial-Complete] Develop multiple options for serving
 - We have experimented with 2 different methods to server the models
     - The simple loading the model and running it in another process (to make the entire logic non-blocking)
+        - This is the initial design we created to serve ML inference
+        - It is a relatively simple solutions we implemented to manage both ML inference and I/O bound
     - Use RabbitMQ as a message broker and use it to send the inference job to different worker
         - Due to time constraint, this serving hasn't been tested
+        - This is a more scalable design that is more robust and scalable, especially when we serve this server using auto-scalar.
 ![image.png](./model_server/images/options.png)
 
 
