@@ -439,8 +439,13 @@ Our specific customer is Spotify. Based on our customer, we did a requirement an
 - For our use case, we simulated a simple explicit interaction that is shown below
 
 ## [Partial-Complete] Develop multiple options for serving
-
-- We have experimented with 2 different methods to server the models - The simple loading the model and running it in another process (to make the entire logic non-blocking) - Use RabbitMQ as a message broker and use it to send the inference job to different worker - Due to time constraint, this serving hasn't been tested
+- We have experimented with 2 different methods to server the models
+    - The simple loading the model and running it in another process (to make the entire logic non-blocking)
+        - This is the initial design we created to serve ML inference
+        - It is a relatively simple solutions we implemented to manage both ML inference and I/O bound
+    - Use RabbitMQ as a message broker and use it to send the inference job to different worker
+        - Due to time constraints, this server hasn't been tested
+        - This is a more scalable design that is more robust and scalable, especially when we serve this server using auto-scalar.
   ![image.png](./model_server/images/options.png)
 
 # Online Evaluation
@@ -503,10 +508,10 @@ Contains data for:
 
 **Scripts for persistent storage setup**
 
-- [Provision object store on Chameleon](<[./provision_object_storage.sh](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/provision_object_storage.sh)>)
-- [Provision block store on Chameleon](<[./provision_block_storage.sh](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/provision_block_storage.sh)>)
-- [Setup object store on the instance](<[./setup_object_store.sh](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/setup_object_store.sh)>)
-- [Setup block store on the instance](<[./setup_block_store.sh](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/setup_block_store.sh)>)
+- [Provision object store on Chameleon](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/provision_object_storage.sh)
+- [Provision block store on Chameleon](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/provision_block_storage.sh)
+- [Setup object store on the instance](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/setup_object_store.sh)
+- [Setup block store on the instance](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data-pipeline/setup_block_store.sh)
 
 ## Offline data and Data Pipeline
 
@@ -535,7 +540,7 @@ For feedback data, we track metrics such as:
 
 ## Online Data
 
-[Airflow script for user simulation](<[./../model_monitoring/dags/pipeline_2_inference.py](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_2_inference.py)>)
+[Airflow script for user simulation](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_2_inference.py)>)
 
 User interaction with the recommendation system is simulated using an **Airflow script**. This script utilizes the **test data split** stored in an object store and runs as a scheduled job every **10 minutes**. In each run, it randomly selects a subset of users and invokes the FastAPI `/recommend` endpoint over a 10-minute window to fetch playlist recommendations. Each API call returns **5 playlist recommendations** for a given user.
 
@@ -600,7 +605,7 @@ Response
 
 ## Data for Retraining
 
-[Airflow script to extract feedback data for retraining](<[./../model_monitoring/dags/pipeline_extract_prod_data.py](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_extract_prod_data.py)>)
+[Airflow script to extract feedback data for retraining](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_extract_prod_data.py)>)
 
 The **user feedback data stored in PostgreSQL** is extracted on a weekly basis using a separate Airflow script. This script processes the data by splitting it into **training, validation, and test sets**, and converts it into the appropriate format required for retraining the model.
 
