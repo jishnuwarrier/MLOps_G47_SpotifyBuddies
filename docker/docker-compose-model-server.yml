@@ -59,7 +59,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - /mnt/block/prometheus_data:/prometheus
+      # - /mnt/block/prometheus_data:/prometheus
     # command:
       # - --config.file=/etc/prometheus/prometheus.yaml
       # - --storage.tsdb.path=/prometheus
@@ -78,8 +78,8 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
-    volumes:
-      - /mnt/block/grafana_data:/var/lib/grafana
+    # volumes:
+    #   - /mnt/block/grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -101,9 +101,9 @@ services:
       timeout: 3s
       retries: 3
     ports:
-      - "5000:80"
+      - "8000:80"
     expose:
-      - "5000"
+      - "8000"
     environment:
       - DEBUG=False
       - REDIS_HOST=redis
