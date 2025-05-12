@@ -240,8 +240,9 @@
           --path {{ fastapi_path }}
           --dest-server https://kubernetes.default.svc
           --dest-namespace spotifybuddies-platform
+          --port-forward
+          --port-forward-namespace=argocd
           --sync-policy automated --self-heal
-      register: fastapi_create
 
     - name: Update FastAPI app
       when: fastapi_check.rc == 0
@@ -268,7 +269,6 @@
           --dest-server https://kubernetes.default.svc
           --dest-namespace spotifybuddies-monitoring
           --sync-policy automated --self-heal
-      register: airflow_create
 
     - name: Update Airflow app
       when: airflow_check.rc == 0

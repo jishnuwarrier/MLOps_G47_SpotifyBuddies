@@ -100,11 +100,13 @@ We normalize by s and p to avoid favoring users or playlists with large librarie
 
 - For the exploration coefficient, we sampled values from a beta distribution. The graph below shows it’s distribution. The assumption is the following: most users want to explore a little bit, and don’t want playlists 100% aligned with their current song library. Also, a few users are very explorative, but the distribution falls quickly as the exploration coefficient increases.
 
+
 ![Exploration Coefficient Distribution](images_log/image.png)
 
-- We are also including some statistics about the exploration coefficient:
 
-<aside>
+- We are also including some statistics about the exploration coefficient: s
+
+```
 📊
 
 Exploration Coefficient Statistics:
@@ -117,12 +119,11 @@ P75: 0.4064
 P99: 0.7835
 Max: 0.9900
 
-</aside>
+```
 
 - Finally, we compute the scores for all user-playlist pairs. The min score sits between 0.0013 and 0.0016, the max score is around 0.49, and the medians core is around 0.125.
 
 ---
-
 ---
 
 ## Part 5) Rank playlists per user and tag ‘liked’ playlists
@@ -130,7 +131,7 @@ Max: 0.9900
 - For each user we will take the top 1.5% playlists by score and mark them as ‘liked’ by the user.
 - Some statistics for the amount of liked playlists per user below (this is for just one slice of 10,000 users). We can see that the median is about 200 songs liked per user, which is reasonable if we think about an average person and the potential set of playlists they might like.
 
-<aside>
+```
 📊
 
 Statistics of liked playlists per user, for a slice of users:
@@ -143,9 +144,9 @@ Median playlists liked per user: 199.00
 Min playlists liked per user: 1.00
 Max playlists liked per user: 4,339.00
 
-</aside>
+```
 
-![Distribution of Liked Playlists per User](images_log/image 1.png)
+![Distribution of Liked Playlists per User](images_log/image_1.png)
 
 ---
 
@@ -176,7 +177,7 @@ Max playlists liked per user: 4,339.00
     6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
     7. Let’s explore some statistics about playlist ownership below. We see that on average users own 4.6 playlists, with a median of 2 playlists. We also explore some ‘ inequality’ metrics: 1% of users own 15% of playlists, and 25% own 72% of playlists. We believe this is quite realistic, as in music streaming services not all users are heavy producers of their own playlists, and some users are ‘power users’  that create many playlists. Of course these are mere assumptions.
     
-    <aside>
+    ```
     📊
     
     Playlist Ownership Stats (Global):
@@ -188,11 +189,11 @@ Max playlists liked per user: 4,339.00
     - Median owned : 2.0
     - 25th percentile : 1.0
     - 75th percentile : 4.0
-    </aside>
+    ```
     
     ![Histogram of Playlist Ownership per User](images_log/image_2.png)
     
-    <aside>
+    ```
     📊
     
     Playlist Ownership Inequality Stats:
@@ -202,7 +203,7 @@ Max playlists liked per user: 4,339.00
      - Top 25% own 71.68% of playlists
      - Gini coefficient       : 0.6033
     
-    </aside>
+    ```
     
     ![Lorenz Curve of Playlist Ownership (straight line is perfect equality)](images_log/image_3.png)
     
@@ -226,7 +227,7 @@ Max playlists liked per user: 4,339.00
     - Finally we shuffle and save the file in torch format.
     - Below we can see some statistics about the triplets. On average, each user has 942 triplets, with a median of 576.
     
-    <aside>
+    ```
     📊
     
     Stats for one slice of triplets:
@@ -241,7 +242,7 @@ Max playlists liked per user: 4,339.00
     - P50 (Median) : 576.00
     - P75 : 1248.00
     - P99 : 6686.72
-    </aside>
+    ```
     
     ![Triplets per User (for one slice of data)](images_log/image_4.png)
     
@@ -259,10 +260,11 @@ Max playlists liked per user: 4,339.00
         
         Measures the average of the reciprocal ranks of the true positive in the ranked list. A higher MRR means the model is ranking positives closer to the top.
         
-        $$
-        \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
-        $$
+    $$
+    \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
+    $$
         
+
     - **Hit@K:**
         
         Measures the percentage of times the positive playlist appears in the top K ranked results. It answers the question: *"Did we get the right answer in the top K?"*
