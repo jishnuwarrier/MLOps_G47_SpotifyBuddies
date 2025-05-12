@@ -104,7 +104,7 @@ We normalize by s and p to avoid favoring users or playlists with large librarie
 
 - We are also including some statistics about the exploration coefficient:
 
-<aside>
+```
 📊
 
 Exploration Coefficient Statistics:
@@ -117,7 +117,7 @@ P75: 0.4064
 P99: 0.7835
 Max: 0.9900
 
-</aside>
+```
 
 - Finally, we compute the scores for all user-playlist pairs. The min score sits between 0.0013 and 0.0016, the max score is around 0.49, and the medians core is around 0.125.
 
