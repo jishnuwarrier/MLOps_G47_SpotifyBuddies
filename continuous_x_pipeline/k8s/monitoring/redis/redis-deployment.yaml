@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotifybuddies-redis
+  namespace: spotifybuddies-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spotifybuddies-redis
+  template:
+    metadata:
+      labels:
+        app: spotifybuddies-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+              name: redis
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redis-pvc
