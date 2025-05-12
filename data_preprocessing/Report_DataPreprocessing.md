@@ -12,7 +12,7 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 ---
 
-## 1) Raw data and initial processing
+## Part 1) Raw data and initial processing
 
 - We load raw data both from ENTP and MPD. Nothing is done here to MPD data, apart from putting the raw slices in a directory.
 - For ENTP data, raw data only has song_id’s, but no song names or artist names. This info is supposed to be fetched from the Million Song Dataset (different from MPD): [http://millionsongdataset.com/](http://millionsongdataset.com/). We grab that information and create a new ENTP dataset with that information included.
@@ -21,7 +21,7 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 ---
 
-## 2) Processing MPD and ENTP and create unique song_ids shared between the two datasets
+## Part 2) Processing MPD and ENTP and create unique song_ids shared between the two datasets
 
 - As mentioned there are about 120k songs shared among MPD and ENTP. In this step we generate unique song id’s that are shared between MPD and ENTP.
 
@@ -29,7 +29,7 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 ---
 
-## 3) Compute the overlap between users and playlists based on songs: use of sparse matrices (scipy.sparse)
+## Part 3) Compute the overlap between users and playlists based on songs: use of sparse matrices (scipy.sparse)
 
 - Goal: we need to assess for each user and playlist, how many songs of the playlist exist in the user song collection. We are looking for a shape like the one in the table below:
 
@@ -82,25 +82,25 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 - Our scoring function is of course based on song similarity between the user song library and the playlist songs list. However, we added some more complexity to it, captured in an ‘exploration coefficient’ for each user. This coefficient goes from 0 to 1 and measures ‘how explorative’ each user is. A user with exploration_coefficient = 0 wants playlists that are perfectly aligned with their current song library, a user with exploration_coefficient=1 values only playlists that have no overlap with their current song library.
 - Additionally, the scores are normalized both by user song library size and by playlist song size.
 
-```markdown
 The score between a user \( i \) and a playlist \( j \) is computed as:
 
 $$
 \text{Score}_{ij} = \frac{(1 - e) \cdot \log(1 + m) + e}{\sqrt{s} \times \sqrt{p}}
 $$
 
-where:
-- \( m \) = number of song matches between user \( i \) and playlist \( j \)
-- \( e \) = exploration coefficient for user \( i \) (random between 0 and 1, skewed towards lower values, sampled from a Beta distribution)
-- \( s \) = total number of unique songs in user \( i \)'s library
-- \( p \) = total number of unique songs in playlist \( j \)
+Where:
+m = number of song matches between user i and playlist j
+e = exploration coefficient for user i (random between 0 and 1, skewed towards lower values using a Beta distribution)
+s = total number of unique songs in user i's library
+p = total number of unique songs in playlist j
 
-Higher scores indicate playlists better aligned to the user's taste, with \( e \) adding randomness and exploration. We are normalizing by s and p.
-```
+Higher scores indicate playlists better aligned to the user's taste.
+The e term adds randomness and encourages exploration.
+We normalize by s and p to avoid favoring users or playlists with large libraries.
 
 - For the exploration coefficient, we sampled values from a beta distribution. The graph below shows it’s distribution. The assumption is the following: most users want to explore a little bit, and don’t want playlists 100% aligned with their current song library. Also, a few users are very explorative, but the distribution falls quickly as the exploration coefficient increases.
 
-![image.png](image.png)
+![Exploration Coefficient Distribution](images_log/image.png)
 
 - We are also including some statistics about the exploration coefficient:
 
@@ -145,7 +145,7 @@ Max playlists liked per user: 4,339.00
 
 </aside>
 
-![image.png](image%201.png)
+![Distribution of Liked Playlists per User](images_log/image 1.png)
 
 ---
 
@@ -190,7 +190,7 @@ Max playlists liked per user: 4,339.00
     - 75th percentile : 4.0
     </aside>
     
-    ![image.png](image%202.png)
+    ![Histogram of Playlist Ownership per User](images_log/image_2.png)
     
     <aside>
     📊
@@ -204,7 +204,7 @@ Max playlists liked per user: 4,339.00
     
     </aside>
     
-    ![image.png](image%203.png)
+    ![Lorenz Curve of Playlist Ownership (straight line is perfect equality)](images_log/image_3.png)
     
     ---
     
@@ -243,7 +243,7 @@ Max playlists liked per user: 4,339.00
     - P99 : 6686.72
     </aside>
     
-    ![image.png](image%204.png)
+    ![Triplets per User (for one slice of data)](images_log/image_4.png)
     
 
 ---
