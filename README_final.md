@@ -124,6 +124,7 @@ We will cover these models in detail below, in addition to the training process 
 <aside>
 📊
 
+
 User Popularity (Times a User Was Paired as Neighbor):
 
 - Users selected as neighbor: 39,634
