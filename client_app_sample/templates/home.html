@@ -31,6 +31,7 @@
     <div id="responseGrid" class="grid"></div>
 
     <script>
+        let playlists = []
         async function fetchRecommendations() {
             const userId = document.getElementById("user_id").value;
             if (!userId) {
@@ -51,7 +52,7 @@
                 return;
             }
 
-            const playlists = data
+            playlists = data
             playlists.forEach(item => {
                 const div = document.createElement("div");
                 div.className = "item";
