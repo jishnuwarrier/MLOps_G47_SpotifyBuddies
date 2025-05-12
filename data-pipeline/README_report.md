@@ -8,11 +8,11 @@
 
 Contains:
 
-1. triplets_data - contains the PyTorch tensor file containing training data for playlist ranker model
-2. positives_splits -
-3. val_eval_batches -
-4. user_pairing_model
-5. other_utils
+1. **triplets_data** - Contains the PyTorch tensor file containing training data
+2. **val_eval_batches** - For evaluation
+3. **positives_splits**
+4. **user_pairing_model**
+5. **other_utils**
 
 ### Block Store in KVM@TACC
 
@@ -27,6 +27,13 @@ Contains data for:
 3. Prometheus
 4. MinIO
 
+**Scripts for persistent storage setup**
+
+- [Provision object store on Chameleon](./provision_object_storage.sh)
+- [Provision block store on Chameleon](./provision_block_storage.sh)
+- [Setup object store on the instance](./setup_object_store.sh)
+- [Setup block store on the instance](./setup_block_store.sh)
+
 ## Offline data
 
 > Needs some input from Agustin
@@ -35,19 +42,32 @@ Contains data for:
 
 ## Data Dashboard
 
-We use a metabase dashboard to show the metrics related to data and data quality.
+We use a Metabase dashboard to monitor various metrics related to both the data and its quality.
 
-For the Training data, we show metrics like distinct users, average blocks per user etc. Let's define a user-block as `(user_id, playlist_id_positive, playlist_id_negative)` triplets where we group by `user_id` and `playlist_id_positive`. The list of `playlist_id_negative`s for a particular `(user_id, playlist_id_positive)` means the user prefers the `playlist_id_positive` over the playlists in `playlist_id_negative` list. For ensuring data quality of the recommendation system, we need to make sure that for a user-block we have only 1 playlist_id_positive.
+For the training data, we display key metrics such as the number of distinct users and the average number of user-blocks per user.
+A `user-block` is defined as a triplet: `(user_id, playlist_id_positive, playlist_id_negative_list)`. Each user-block groups together entries by user_id and their preferred `playlist_id_positive`, along with a list of `playlist_id_negative` values. These negative playlist IDs represent alternatives that the user preferred less than the positive one.
+To ensure the integrity and consistency of our training data, we validate that each `user-block` contains only one `playlist_id_positive` per `(user_id, playlist_id_positive)` combination.
 
-For the Feedback data, we show metrics like number of daily users giving feedback, number of weekly users giving feedback etc. We also show average score per day to help catch any bias in recommendations. For data integrity, similar to training we show if there are any invalid user-blocks. We show the feedback over time for retraining threshold. We also show th cumulative feedback growth - this is to know when the dataset is large enough to retrain. We also display distinct users - since we want to check diversity in the feedback and not have power users.
+![training-widgets](./images/training.png)
 
-### Data Leakage
+For feedback data, we track metrics such as:
+
+- Daily and weekly user counts providing feedback
+- Average feedback score per day, to identify potential recommendation bias
+- Invalid user-blocks, similar to training data checks, to ensure data integrity
+- Feedback volume over time, which helps determine when enough new data has accumulated to trigger model retraining
+- Cumulative feedback growth, providing insight into overall dataset expansion
+- Number of distinct feedback users, which helps us monitor user diversity and avoid over-representation by "power users"
+
+![feedback-widgets](./images/feedback.png)
 
 ## Online Data
 
-User interaction with the recommendation system is done via an Airflow script. The script uses the test-data split stored in the object store. The Airflow job is run every 10 minutes - it selects a particular amount of users randomly and calls the fastapi `/recommed` api over the duration of 10 minutes to get the recommendations. We offer 5 playlists recommendations per api call.
+[Airflow script for user simulation](./../model_monitoring/dags/pipeline_2_inference.py)
 
-Regarding closing the loop, we take feedback from the user on the application. The UI for this application is hosted. Currently, we only support the user liking 1 playlist out of the 5 playlists. For simulation purposes though, we call a fastapi endpoint called `/feedback` through the same airflow script. This stores the user feedback in the postgres database.
+User interaction with the recommendation system is simulated using an **Airflow script**. This script utilizes the **test data split** stored in an object store and runs as a scheduled job every **10 minutes**. In each run, it randomly selects a subset of users and invokes the FastAPI `/recommend` endpoint over a 10-minute window to fetch playlist recommendations. Each API call returns **5 playlist recommendations** for a given user.
+
+To **close the feedback loop**, we collect user responses through a hosted UI. Currently, the interface allows the user to **like one playlist out of the five recommended**. For simulation purposes, this interaction is automated— the Airflow script also makes calls to the FastAPI `/feedback` endpoint, mimicking user input. The simulated feedback is then stored in a **PostgreSQL database**, ensuring we can track and analyze user preferences over time.
 
 The request and response format as given below:
 
@@ -108,4 +128,10 @@ Response
 
 ## Data for Retraining
 
-The data from Postgres is extracted using another Airflow script on a weekly basis. Data is split into train, validation and test and converted into the required format for retraining. `rclone` is used inside the Airflow script using python subprocesses to push the new data into the object store. This data will be appended to the main training data and used for training. In recommendation systems, usually we deal with a sliding window style training data. So as we collect more and more data, ideally we will start removing data from the beginning to keep the data size reasonalble. This also make sense for a recommedation system as people are much more likely to like a recommendation based on their interest during the past month than say a year.
+[Airflow script to extract feedback data for retraining](./../model_monitoring/dags/pipeline_extract_prod_data.py)
+
+The **user feedback data stored in PostgreSQL** is extracted on a weekly basis using a separate Airflow script. This script processes the data by splitting it into **training, validation, and test sets**, and converts it into the appropriate format required for retraining the model.
+
+To store the processed data, the script uses the rclone tool (invoked via Python subprocesses) to upload the new datasets to the **object store**. This newly collected data is then appended to the existing training dataset.
+
+In recommendation systems, it's common to adopt a **sliding window approach** for training data. As we accumulate more feedback, older data is gradually phased out to keep the dataset manageable in size and relevant. This is especially important in our context—since user preferences tend to evolve, recent behavior (e.g., from the past month) is generally more indicative of current interests than data that is several months or a year old.
