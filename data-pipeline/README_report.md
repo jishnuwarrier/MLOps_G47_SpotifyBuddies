@@ -22,10 +22,10 @@ Contains:
 
 Contains data for:
 
-1. Postgres(used for storing feedback data, Metabase dashboard metadata, Grafana and Prometheus related data)
-2. Grafana
-3. Prometheus
-4. MinIO
+1. **Postgres**(used for storing feedback data, Metabase dashboard metadata, Grafana and Prometheus related data)
+2. **Grafana**
+3. **Prometheus**
+4. **MinIO**
 
 **Scripts for persistent storage setup**
 
