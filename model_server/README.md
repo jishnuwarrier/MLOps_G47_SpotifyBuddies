@@ -96,4 +96,9 @@ Our specific customer is Spotify. Based on our customer, we did a requirement an
     - Model monitoring
         - Here, we monitor: Total Number of inference, Total Number of Cold User Encountered, Inference time, and the distribution of predictions over time
 
-
+## Data Drift-detection
+- During testing phase, we found out that the most prominent issues our model could face was the cold-user (i.e. user's without prior playlists/music test). So, we focused on detection of cold-start user
+- For this, we simply counted the rate of fraction of cold users we encountered. This can be seen in the dashboards below
+    - This simple drift detection worked for our current use case.
+    - With the increase of data size and features, we can move away from this and use more advance detection technique such as Chi-Square test
+![image.png](./images/grafana-dashboard.png)
