@@ -100,9 +100,10 @@ We normalize by s and p to avoid favoring users or playlists with large librarie
 
 - For the exploration coefficient, we sampled values from a beta distribution. The graph below shows it’s distribution. The assumption is the following: most users want to explore a little bit, and don’t want playlists 100% aligned with their current song library. Also, a few users are very explorative, but the distribution falls quickly as the exploration coefficient increases.
 
+
 ![Exploration Coefficient Distribution](images_log/image.png)
 
-- We are also including some statistics about the exploration coefficient:
+- We are also including some statistics about the exploration coefficient: s
 
 ```
 📊
