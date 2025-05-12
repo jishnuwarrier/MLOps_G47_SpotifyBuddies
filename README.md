@@ -1026,7 +1026,7 @@ All cluster provisioning and application registration is fully automated with An
 [Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb). Create a jupyter notebook in chameleon and run this jupyter notebook after adding ansible.cfg
 
     
-    [nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
+    ![nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
         
 3. **Post-Install Configuration**
     - **Playbook:** [post_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/post_k8s/post_k8s_configure.yml)
