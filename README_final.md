@@ -351,52 +351,122 @@ tune.run(
 
 - Probably it would have been more interesting to explore another hyperparameter, such as embedding dimensions of the BPR Model, but still Ray Tune proved to be a valuable tool at exploring hyperspace optimization in a consistent way.
 
+# Model Serving
 
-## Model serving and monitoring platforms (Anup)
+## Serving from an API Endpoint
 
-- **Model Serving**
-    - **Serving from an API endpoint**
-        - Will use FastAPI to expose API endpoints to get model inferences. Since FastAPI supports native async functions, we will use asynchronous functions for the API endpoints
-    - **Identify requirements**
-        - Our model will give out inferences/recommendation in a fixed schedule (similar to Spotify’s `Top Picks for Today` features)
-            - We will do experiment with inferences using dynamic batching with and without delay. We picked these since we are targeting for inferences in a schedule
-        - Will be completely cloud-native. Our primary focus will be to serve concurrent user requests.
-    - **Model optimizations to satisfy requirements**
-        - We are aiming for high accuracy, so we will focus on optimization that makes the model more efficient but won’t affect its accuracy like graph optimization.
-    - **System optimizations to satisfy requirements**
-        - When taking into account the worst case scenario, it is possible that all the active users will request the playlist recommendation concurrently, which our project should be able to handle in optimized manner.
-            - Our assertion is that user's will get the recommendation in a fixed scheduler. So, we will explore the possibility of using CRON jobs and Celery Queueing service to manage the schedule and asynchronous queues to handle the request for inferences.
-    - **Develop multiple options for serving**
-        - We will be benchmarking deploying in Server-Grade GPU, Server-Grade CPU. We won't be deploying in on-device for this project so we won't take that into consideration.
-            - We will produce a comparative report that will include the overall throughput, costs, on the basis of which we will determine which system to deploy the model during production.
-- **Model Monitoring**
-    - **Offline evaluation of model**
-        - Model Evaluation
-            - We will use the similarity metrics defined in the model training section to evaluate the model based on the similarity with the user’s own playlist and the recommended playlist
-            - Test on known failure modes
-                - For Cold Start Users i.e. Users with no generated, followed, liked playlist (Completely New Users): We will simply show the most popular/most liked/ most followed playlist to the users.
-            - Unit tests
-                - Our current plan is to add the unit test of the models to a web-hook, so that when-ever we modify the model code and try to push the updated component, it needs to pass the unit-test first
-    - **Load test in staging**
-        - We will load test the service by increasing the total number of concurrent users request. We will include it in the CI/CD pipeline and log the results after every deployment to staging area for reporting and further references
-    - **Online evaluation in canary**
-        - We will act as different types of Spotify users such as:
-            - Users with no generated, followed, liked playlist (Cold start users)
-                - At first, we will recommend the overall most popular playlist i.e. playlist with most follow/likes
-                - Then, we will at first track the user’s activity so that we can build up a sort of User Persona. Only after that, will we apply the personalized recommendation
-            - Users with all of their playlist
-                - We will evaluate recommendation based 2 factors
-                    - Similarity to the playlist that generated, liked, followed have as the users
-                    - Our own subjective evaluation of the playlist taste
-    - **Closing the feedback loop**
-        - Business-specific evaluation
-            - Our business-specify evaluation will be the one that is currently used by Spotify, which is most probably (since we don’t know all the internal business evaluation metrics Spotify uses) something along the lines of Time Spent Listening, Click-through rates
-                - All the different metrics will feed into the overall North Start Metrics of Spotify, which is the time spent listening to music
-        - We will primarily track user’s activity and engagement metrics to get the feedback about the quality of our model. The activity will consists of
-            - Explicit liking and saving the recommended playlists
-            - Implicitly activity such as listing to the more than some arbitrary percentages (Will be iteratively modified based on the business metrics and stakeholder decision) of the songs in the playlist
-    - **Monitor for model degradation**
-        - We will employ Prometheus service to check for the degradation of model’s performance. Our current idea is that if the user activity stops improving/increasing even after getting the model, then we can assume that the model’s performance has degraded. Then, we will trigger the automated machine training pipeline
+- We setup the API using [FastAPI](https://fastapi.tiangolo.com/). Reasons for choosing FastAPI for our Model Server
+    - Ease to setup endpoints relatively fast for rapid prototyping and great developer experience
+    - Our Model Server doesn’t just have Model Prediction task, it has I/O bound tasks (read/write to Redis). So, we choose FastAPI to leverage it’s native async capabilities
+    - Bias and familiarity with using FastAPI
+- The request body of our API endpoint is simply a list of `user_id` . Our output consists of map of `users_id`  mapped to the list of top-n recommended `playlist_id` for them.
+    - Our API response output is strictly for testing and logging the predictions. We don’t serve the Predictions directly to the users from our Server!
+
+![image.png](.model_server/images/api_endpoint.png)
+
+## Identify Requirements
+
+Our specific customer is Spotify. Based on our customer, we did a requirement analysis and identified:
+
+- Have recommended playlists daily for daily users.
+    - We can run the recommendation every day in scheduled batches rather than doing real-time inference
+- Have the inference be done in an interval rather than real-time (based on existing features such as “Discover Weekly” and “Release Radar”)
+- User should be able to get the recommended playlists with minimal latency
+    - Note ⇒ Even though they should get the playlists with minimal latency, we don’t necessarily need to make the inference in real time.
+- Have a method to get user feedback on the given recommendation
+
+## Model Optimizations
+
+- We tried to mimic the flow of how Spotify performs does personalized playlists recommendation.
+- Our System comprises of 2 models, the User Pairing Model and the Playlist Ranking Model
+- We actually have the User Pairing Model done in a “offline” environment and it isn’t done during the actual “online” inference. The Server simply fetches the data the output from User Pairing Model
+    - The output from User Pairing is further processed during the “offline” environment; the User Pairing already maps the users to their neighbors’ playlist which is then used by the Model Server for inference
+    - In a system like Spotify, this Pairing is stored and fetched through some sort of [vector database](https://lynkz.com.au/blog/2024-vector-databases) to represent the users’ preferences. For our demonstration, we are loading the user pairing directly to our server during startup and are using function to simulate the fetching of pairing from the database. We can find this done in`model_server/ml_models/model.py`
+
+## System Optimization
+
+- Docker Image
+    - We focused on minimizing the docker image size and speeding up image build up time
+        - To achieve this, we utilized [uv](https://docs.astral.sh/uv/) as the package manager to leverage its faster build installation time.
+            - Implementing the uv package reduced our docker build for the Inference Server from around 300 seconds to 30 seconds in the KVM `m1.large` instance
+        - We also utilized Multi-Stage Dockerfile to optimize Docker Images and mimic a Production Ready Docker Image Build. This can be seen the [Dockerfile](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/Dockerfile).
+            - We `bookworm-slim` as base image to optimize our Docker containers
+        - For our first iteration, we tried utilizing Nvidia’s CUDA for our Inference Model. But, it caused more issues with minimal gain.
+            - Issues:
+                - Our image build time increased upward to 200s
+                - Our image size was more than 6GB.
+                - Minimal gain in performance:
+                    - Our inference model has a embedding dimension of 128
+                    - We are doing inference in batches of 1000 users
+                    - Our use case doesn’t require real-time predictions (since our inference will be done in a schedule of once a day)
+                - The performance benefit of using GPU did not justify the cost in size and complexity of the build
+            - To optimize deployment
+                - We switched to use `pytorch-cpu`  to run the model in the Inference server.
+                - Although the model was originally trained on GPU, it is now served on CPU, which meets our latency and throughput requirements
+            - Results:
+                - Image Size went from 6 GB to around 2 GB
+                - Build time decreased back to around 30 second
+                - We didn’t need CUDA drivers or CPU support for production
+            - Our `pyproject.toml` description for the model inference. [Link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/pyproject.toml)
+    - PS: We are running Python 3.12 rather than Python 3.13 due to compatibility issues with libraries used by for machine learning libraries
+        - Due to this, we couldn’t leverage disabling the GIL for non-blocking operations
+- Making Inference Logic and IO logic non-blocking
+    - Our Inference Server has 2 main jobs:
+        - Prediction/Inference using the ML Model
+        - I/O to the database (in our case; Redis)
+    - Since ML Model is an expensive and blocking task, during high number of request calls to the inference, it would dominate the FastAPI event loop. So, we opted to run this in its own separate process with max worker of 1 to reduce IPC
+    - Doing this, we effectively made the model prediction task into a non-blocking task. Through this, we can leverage the async nature of FastAPI.
+        - The implementation can be seen in
+            - def [intialize_model](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/ml_model/model.py)
+            - def [recommend_playlist](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/ml_model/recommender.py)
+            - [API endpoint in action](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/routers/playlist.py)
+        - NOTE ⇒ We also have a implementation that uses RabbitMQ as message broker to send the prediction jobs to workers, all of whom then send the prediction directly to Redis. But, due to time constraint, this hasn’t been tested thoroughly.
+            - The implementation can be seen in
+                - `./model_server/services/rabbitmq.py`
+                - `./model_server/services/rabbitmq_worker.py`
+                - `./model_server/routes/playlist.py`  in the `beta_recommend` route
+- Batch Input
+    - For recommendation systems that are run in a schedule, the inference is done in batches of input. So, we opted to use that
+        - Through our offline experiments, we found out that our model could run batches of 1000 ([experiment link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/training/sb_inference_model_v2.py)) inputs with significant improvement when compared to sequential predictions.
+        - So, to enable that, we modified the prediction function to accommodate batch inference based on the above experiment
+            - Implementation [Recommender().predict()](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/ml_model/model.py)
+
+## Business Specific Evaluation
+- Business Specific Evaluation would be the increase in the Click Through Rate of the recommended playlists through tracking of users activity
+- For our use case, we simulated a simple explicit interaction that is shown below
+
+## [Partial-Complete] Develop multiple options for serving
+- We have experimented with 2 different methods to server the models
+    - The simple loading the model and running it in another process (to make the entire logic non-blocking)
+    - Use RabbitMQ as a message broker and use it to send the inference job to different worker
+        - Due to time constraint, this serving hasn't been tested
+![image.png](./model_server/images/options.png)
+
+
+# Online Evaluation
+## Closing the feedback Loop
+- To close the feedback loop, we opted for explicit user interaction
+- We created a rudimentary HTML page where we can enter a user_id and it gives out the recommended playlist_id
+- The user chooses which playlist they like
+    - The liked interaction along with the ignored playlist is then sent to the Postgres database based for next iteration of model retraining
+- For the sample client_app, see the [link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/client_app_sample)
+- (Very rudimentary) UI
+![image.png](./model_server/images/feedback_loop.png)
+
+# Monitoring
+- We used Grafana with Prometheus as data source to monitor the "online" environment
+- We made 2 dashboards:
+    - API monitoring
+        - Here, we monitor: API latency, Average API request rate, API fail rate
+    - Model monitoring
+        - Here, we monitor: Total Number of inference, Total Number of Cold User Encountered, Inference time, and the distribution of predictions over time
+
+## Data Drift-detection
+- During testing phase, we found out that the most prominent issues our model could face was the cold-user (i.e. user's without prior playlists/music test). So, we focused on detection of cold-start user
+- For this, we simply counted the rate of fraction of cold users we encountered. This can be seen in the dashboards below
+    - This simple drift detection worked for our current use case.
+    - With the increase of data size and features, we can move away from this and use more advance detection technique such as Chi-Square test
+![image.png](./model_server/images/grafana-dashboard.png)
 
 # Data pipeline (Akhil)
 
@@ -816,39 +886,260 @@ $$
 - The validation positives are unseen for a given user, but they might have been a positive for a different user during training.
 
 
-## Continuous X (Jishnu)
+# Part 4: Continuous X (Jishnu)
 
-- We will implement a fully automated CI/CD pipeline using Github Actions and integrate with the infrastructure hosted on ChameleonCloud
-- All the cloud native principles such as containerization, microservices, immutable infrastructure and version controlled automated deployments will be used.
-- Containerization
-    - All components of the system (model training, inference APIs and monitoring tools) will be packaged as docker containers. This will ensure reproducibility, modularity and easy deployment across environments.
-- Orchestration
-    - We will use Kubernetes on Chameleon to manage our containerized services.
-    - Kubernetes will handle:
-        - Orchestration of training and serving containers
-        - Health checks and restart policies
-        - autoscaling of servers based on resource usage or request load
-        - Rolling updates and rollbacks for safe deployments
-- The pipeline will be triggered by:
-    - Code pushes to the main branch
-    - Scheduled training
-    - Performance degradation alerts from monitoring
-- Pipeline steps:
-    - Have webhooks for unit testing before pushing
-    - Retrain both the user pairing and playlist ranking models using Ray
-    - Run offline evaluation and log metrics to MLflow
-    - Build Docker containers for each service
-    - Package services into Docker containers and deploy to staging, canary, and production environments.
-- Deployment environments
-    - Staging
-        - All services will be deployed here for our load and integration testing
-    - Canary
-        - New models will be rolled out to a subset of users for online evaluation
-        - If the canary evaluation passes our engagement and accuracy metrics
-    - Production
-        - Final stable version of the system that are available to all the users.
+Below is the folder structure for the continuous_x_pipeline code
 
-- Infrastructure as code
-    - The infrastructure will be provisioned using Ansible and Helm
-    - Infrastructure will follow immutable infrastructure principles—changes are only made by updating configuration and redeploying
+```text
+├── continuous_x_pipeline
+│   ├── ansible
+│   │   ├── argocd
+│   │   ├── k8s
+│   │   │   ├── inventory
+│   │   │   │   └── mycluster
+│   │   │   │       └── group_vars
+│   │   │   └── kubespray
+│   │   ├── post_k8s
+│   │   └── pre_k8s
+│   ├── k8s
+│   │   ├── canary
+│   │   │   └── templates
+│   │   ├── monitoring
+│   │   │   ├── airflow
+│   │   │   ├── grafana
+│   │   │   ├── prometheus
+│   │   │   └── redis
+│   │   ├── platform
+│   │   │   ├── fastapi
+│   │   │   └── templates
+│   │   ├── production
+│   │   │   └── templates
+│   │   └── staging
+│   │       └── templates
+│   ├── terraform
+│   └── workflows
+```
+
+
+--------
+
+## Infrastructure-as-Code (IaC) - Terraform
+
+We manage all of our Chameleon infrastructure with Terraform. The entire configuration lives in the ```/continuous_x_pipeline/terraform``` folder of the repository.
+
+In [versions.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/versions.tf/) -
+We lock our Terraform toolchain to version 0.14 or newer, and pin the OpenStack provider plugin to the 1.51.x series to guarantee reproducability across machines.
+
+In [provider.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/provider.tf/) -
+We declare a single OpenStack provider named "openstack", matching the cloud entry in your clouds.yaml. Terraform will read your Chameleon credentials from that file and use them for all API calls.
+
+### Input Variables
+In [variables.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/variables.tf/) - 
+We expose four key variables:
+
+suffix (string, required) – our project’s unique suffix (project47 in our case), appended to every resource name to avoid collisions.
+
+key (string, default id_rsa_chameleon) – the SSH keypair name to install on each VM.
+
+nodes (map of strings) – a map of logical node names ("node1", "node2", "node3") to fixed private IP addresses on our 192.168.1.0/24 subnet and they are named node1-mlops-project47, node2-mlops-project47, node3-mlops-project47.
+
+data_volume_size (default 50) – the size (in GB) of a shared block-storage volume we attach to node1 for logs, model artifacts, or other persistent files.
+
+### Data Sources
+In [data.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/data.tf/) - 
+We import existing OpenStack objects we do not manage in this repo:
+
+The public network & subnet (sharednet2), so we can place VM ports there.
+
+Seven security groups (allow-ssh, allow-9001, allow-8000, allow-8080, allow-8081, allow-http-80, and allow-9090) to lock down SSH and our various service ports.
+
+### Core Resources
+[main.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/main.tf/):
+
+Private Network & Subnet
+We create a new isolated network and a 192.168.1.0/24 subnet with port security disabled. This hosts our control-plane communication between nodes.
+
+Network Ports
+For each node in var.nodes, we use up two ports:
+
+-A private port on our new subnet, taking the IP from the map.
+
+-A public port on sharednet2, bound to exactly the security groups we imported.
+
+Compute Instances
+We launch one Ubuntu VM per entry in var.nodes (flavor m1.medium). Each VM gets both its private and public port attached, plus a little user_data script to populate /etc/hosts and install your SSH keys via the Chameleon cloud-init hook.
+
+Floating IP
+We allocate a single floating IP and bind it to node1’s public port—this is the IP you’ll use to reach your cluster head node for Ansible, ArgoCD, or your FastAPI endpoints.
+
+Persistent Block Storage
+We create a volume of size var.data_volume_size (50 GB) and attach it to node1 at /dev/vdb, giving you a durable filesystem for model artifacts, data, or logs.
+
+### Outputs
+[outputs.tf](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/terraform/outputs.tf/) - 
+We export only the floating IP’s address as floating_ip_out. This makes it easy for subsequent Ansible playbooks or for your README instructions to reference exactly terraform output floating_ip_out when building your inventory or service URLs.
+
+
+The ```ansible/inventory.yml``` file has the IP’s of the 3 nodes provisioned using Terraform.
+
+
+## Instructions to run terraform:
+
+1. Open a Jupyter server on chameleon.
+2. Upload your clouds.yaml file in the server.
+3. Clone the github repo - 
+
+`git clone --recurse-submodules https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git`
+
+1. Go to KVM@TACC in chameleon > Identity > Application Credential > Create an application credential on Chameleon and download the clouds.yaml file.
+2. Upload your clouds.yaml file to jupyter. (It should be stored in /work/clouds.yaml)
+3. Open terminal and run the following commands:
+    1. `cd /work/MLOps_G47_SpotifyBuddies/continuous_x_pipeline/terraform` #Navigating to the directory
+    2. `chmod +x terraform_script.sh` #To make the script executable 
+    3. `./terraform_script.sh` #Run the script
+
+----
+
+## Configuration-as-Code (CaC) & Kubernetes Bootstrapping
+
+All cluster provisioning and application registration is fully automated with Ansible, under the continuous_x_pipeline/ansible directory. 
+
+
+1. **OS Preparation**
+    - **Playbook:** [pre_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/pre_k8s/pre_k8s_configure.yml)
+        
+        Runs on all nodes to disable and mask firewalld, install containerd (or Docker), and configure /etc/docker/daemon.json with our insecure-registry settings. This ensures our cluster nodes will pull images from the local registry without manual steps.
+        
+2. **Kubernetes Installation (done using Kubespray)**
+    - **Inventory:**
+        - [hosts.yaml](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/k8s/inventory/mycluster/hosts.yaml)  - lists each node’s private IP and SSH user.
+        - [all.yaml](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/k8s/inventory/mycluster/group_vars/all.yaml) -  overrides defaults to enable the dashboard, Helm, and disable features we don’t need (VIP, Node Feature Discovery).
+    - **Run:**  ```ansible-playbook -i ansible/k8s/inventory/mycluster/ansible.cfg ansible/k8s/kubespray/cluster.yml```
+        
+        This playbook deploys a self-managed Kubernetes cluster across the three VMs, handling kube-adm, networking, and control-plane HA out-of-the-box.
+
+        The code for running the ansible playbook to create the k8s configuration is in 
+[Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb). Create a jupyter notebook in chameleon and run this jupyter notebook after adding ansible.cfg
+
+    
+    [nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
+        
+3. **Post-Install Configuration**
+    - **Playbook:** [post_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/post_k8s/post_k8s_configure.yml)
+        
+        On node1, copies the cluster’s `admin.conf` into each user’s `~/.kube/config`, sets up hostname mappings, and applies sysctl tweaks (e.g. disabling IPv6). This gives you immediate `kubectl` access via the head node.
+
+----
+
+## Applications:
+
+The applications we are using are:<br>
+Graphana - dashboard and visualization tool for monitoring metrics and logs.
+
+Prometheus - Real-time monitoring by scraping FastAPI server in 15 second intervals
+
+Minio - Storing MLflow artifacts and MLflow tracking using a bucket
+
+Airflow - To schedule inference as well as simulating the users interacting with recommendation.
+
+Redis - Stores the model 
+
+Postgres - To store the feedback, and used by other applications.
+
+MLFlow - Tracking experiments, storing model metrics and model registration.
+
+FastAPI - Model serving
+
+
+----
+
+## List of namespaces:
+
+I've created a total of 5 namespaces for our application.
+
+### [`spotifybuddies-platform`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/platform)  
+**Purpose:** Core platform services that support experiment tracking, model registry, and artifact storage.  
+**Contains:**  
+- PostgreSQL
+- MinIO
+- MLflow Server
+- FastAPI
+
+
+---
+
+### [`spotifybuddies-monitoring`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/monitoring)
+**Purpose:** Cluster-wide monitoring and visualization.  
+
+**Contains:**  
+- Prometheus   
+- Grafana 
+- Airflow  
+- Redis 
+
+---
+
+### [`spotifybuddies-staging`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/staging)
+**Purpose:** Early testing environment for our FastAPI application before canary rollout.  
+
+**Contains:**  spotifybuddies-app Deployment 
+
+---
+
+### [`spotifybuddies-canary`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/canary)  
+**Purpose:** Gradual roll-out environment to validate new image tags under real traffic.  
+
+**Contains:** spotifybuddies-app Deployment  
+
+---
+
+### [`spotifybuddies-production`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/production)
+
+**Purpose:** Live environment serving real user traffic.  
+
+**Contains:** spotifybuddies-app Deployment   
+
+----
+
+The jupyter notebook for adding environments, platforms and build.
+[Ansible-platform & build](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible_build.ipynb)
+
+The command ```ansible-playbook -i inventory.yml argocd/argocd_add_platform.yml``` was run to add platforms, after which all the applications could be accessed.
+For example, MLFlow can be accessed using - [Link](http://129.114.25.50:8000/)
+
+## Error Description
+
+After completion of the kubernetes deployment using Ansible, I ran into running the ansible-playbook -i inventory.yml argocd/workflow_build_init.yml
+
+
+
+This triggered an Argo Workflow with two steps: a git-clone to fetch the repository and a Kaniko container build.
+
+While the Git clone step successfully cloned the repository into /mnt/workspace (as confirmed by the following output):
+
+![Error](./continuous_x_pipeline/images/dockerfile_error.png)
+
+the subsequent Kaniko step failed with the following error: error resolving dockerfile path: please provide a valid path to a Dockerfile within the build context with --dockerfile
+
+As seen in the output of the ls command the Dockerfile is in the root directory itself. 
+The error was during the execution of the file [build-initial.yaml](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/workflows/build-initial.yaml) in line 56 despite trying with both absolute, and relative path.
+
+```- --dockerfile=/mnt/workspace/Dockerfile```
+
+```- --dockerfile=Dockerfile```
+
+---
+
+While the Kubernetes infrastructure and ArgoCD integration were successfully set up, all three application environments—staging, canary, and production—failed during runtime due to missing container images. This is the reason that although the ansible notebook ran for each of the 3 environments, the deployment wasn't successful. 
+
+![kubectl logs](./continuous_x_pipeline/images/kubectl_logs.png)
+
+As seen in the ArgoCD UI screenshot, the spotifybuddies-staging, spotifybuddies-canary, and spotifybuddies-production applications are in a "Degraded" state. Correspondingly, the kubectl get pods output confirms that each environment's FastAPI deployment pod is stuck in the ImagePullBackOff state, which indicates Kubernetes is continuously attempting, and failing, to pull the required container image.
+
+
+
+![argocd_degraded](./continuous_x_pipeline/images/argocd_degraded.png)
+
+
+
 
