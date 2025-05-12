@@ -77,6 +77,16 @@ Our specific customer is Spotify. Based on our customer, we did a requirement an
         - Through our offline experiments, we found out that our model could run batches of 1000 ([experiment link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/training/sb_inference_model_v2.py)) inputs with significant improvement when compared to sequential predictions.
         - So, to enable that, we modified the prediction function to accommodate batch inference based on the above experiment
             - Implementation [Recommender().predict()](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/ml_model/model.py)
+## Business Specific Evaluation
+- Business Specific Evaluation would be the increase in the Click Through Rate of the recommended playlists through tracking of users activity
+- For our use case, we simulated a simple explicit interaction that is shown below
+
+## [Partial-Complete] Develop multiple options for serving
+- We have experimented with 2 different methods to server the models
+    - The simple loading the model and running it in another process (to make the entire logic non-blocking)
+    - Use RabbitMQ as a message broker and use it to send the inference job to different worker
+        - Due to time constraint, this serving hasn't been tested
+![image.png](./images/options.png)
 
 # Online Evaluation
 ## Closing the feedback Loop
