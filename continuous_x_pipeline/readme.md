@@ -1,4 +1,4 @@
-## Continuous X:
+## Part 4: Continuous X
 
 Below is the folder structure for the continuous_x_pipeline code
 
@@ -129,13 +129,38 @@ All cluster provisioning and application registration is fully automated with An
     - **Run:**  ```ansible-playbook -i ansible/k8s/inventory/mycluster/ansible.cfg ansible/k8s/kubespray/cluster.yml```
         
         This playbook deploys a self-managed Kubernetes cluster across the three VMs, handling kube-adm, networking, and control-plane HA out-of-the-box.
+    
+    [nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
         
 3. **Post-Install Configuration**
     - **Playbook:** [post_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/post_k8s/post_k8s_configure.yml)
         
         On node1, copies the cluster’s `admin.conf` into each user’s `~/.kube/config`, sets up hostname mappings, and applies sysctl tweaks (e.g. disabling IPv6). This gives you immediate `kubectl` access via the head node.
 
---
+----
+
+## Applications:
+
+The applications we are using are:<br>
+Graphana - dashboard and visualization tool for monitoring metrics and logs.
+
+Prometheus - Real-time monitoring by scraping FastAPI server in 15 second intervals
+
+Minio - Storing MLflow artifacts and MLflow tracking using a bucket
+
+Airflow - To schedule inference as well as simulating the users interacting with recommendation.
+
+Redis - Stores the model 
+
+Postgres - To store the feedback, and used by other applications.
+
+MLFlow - Tracking experiments, storing model metrics and model registration.
+
+FastAPI - Model serving
+
+
+----
+
 ## List of namespaces:
 
 I've created a total of 5 namespaces for our application.
@@ -146,6 +171,7 @@ I've created a total of 5 namespaces for our application.
 - PostgreSQL
 - MinIO
 - MLflow Server
+- FastAPI
 
 
 ---
@@ -157,7 +183,6 @@ I've created a total of 5 namespaces for our application.
 - Prometheus   
 - Grafana 
 - Airflow  
-- Fastapi  
 - Redis 
 
 ---
@@ -165,20 +190,14 @@ I've created a total of 5 namespaces for our application.
 ### [`spotifybuddies-staging`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/staging)
 **Purpose:** Early testing environment for our FastAPI application before canary rollout.  
 
-**Contains:**  
-- spotifybuddies-app Deployment 
-- Service 
-- ConfigMap & Secrets  
+**Contains:**  spotifybuddies-app Deployment 
 
 ---
 
 ### [`spotifybuddies-canary`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/canary)  
 **Purpose:** Gradual roll-out environment to validate new image tags under real traffic.  
 
-**Contains:**  
-- spotifybuddies-app Deployment 
-- Service   
-- Horizontal Pod Autoscaler (HPA) 
+**Contains:** spotifybuddies-app Deployment  
 
 ---
 
@@ -186,28 +205,49 @@ I've created a total of 5 namespaces for our application.
 
 **Purpose:** Live environment serving real user traffic.  
 
-**Contains:**  
-- spotifybuddies-app Deployment   
-- Service
-- NetworkPolicy  
+**Contains:** spotifybuddies-app Deployment   
 
----
+----
+
+The code for running the ansible playbooks are in 
+[Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb)
+
+[Ansible-platform & build](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible_build.ipynb)
+
+The command ```ansible-playbook -i inventory.yml argocd/argocd_add_platform.yml``` was run to add platforms, after which all the applications could be accessed.
+For example, MLFlow can be accessed using - [Link](http://129.114.25.50:8000/)
 
 ## Error Description
 
 After completion of the kubernetes deployment using Ansible, I ran into running the ansible-playbook -i inventory.yml argocd/workflow_build_init.yml
 
-The image of the error logs is below
 
-![Error](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/images/dockerfile_error.png)
 
-# tbd
-write about list of namespaces used & apps deployed
+This triggered an Argo Workflow with two steps: a git-clone to fetch the repository and a Kaniko container build.
 
-write about which app is deployed in which node
+While the Git clone step successfully cloned the repository into /mnt/workspace (as confirmed by the following output):
 
-bash script for k8s deployment & instructions to run
+![Error](./continuous_x_pipeline/images/dockerfile_error.png)
 
-show image of containers
+the subsequent Kaniko step failed with the following error: error resolving dockerfile path: please provide a valid path to a Dockerfile within the build context with --dockerfile
 
-created staging, canary, and prod envs but they are failing, and give reason
+As seen in the output of the ls command the Dockerfile is in the root directory itself. 
+The error was during the execution of the file [build-initial.yaml](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/workflows/build-initial.yaml) in line 56 despite trying with both absolute, and relative path.
+
+```- --dockerfile=/mnt/workspace/Dockerfile```
+
+```- --dockerfile=Dockerfile```
+
+---
+
+While the Kubernetes infrastructure and ArgoCD integration were successfully set up, all three application environments—staging, canary, and production—failed during runtime due to missing container images. This is the reason that although the ansible notebook ran for each of the 3 environments, the deployment wasn't successful. 
+
+![kubectl logs](./continuous_x_pipeline/images/kubectl_logs.png)
+
+As seen in the ArgoCD UI screenshot, the spotifybuddies-staging, spotifybuddies-canary, and spotifybuddies-production applications are in a "Degraded" state. Correspondingly, the kubectl get pods output confirms that each environment's FastAPI deployment pod is stuck in the ImagePullBackOff state, which indicates Kubernetes is continuously attempting, and failing, to pull the required container image.
+
+
+
+![argocd_degraded](./continuous_x_pipeline/images/argocd_degraded.png)
+
+
