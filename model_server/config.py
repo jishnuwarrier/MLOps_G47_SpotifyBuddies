@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # ML Model Path
     MODEL_PATH: str = ""
     MODEL_CONFIG_PATH: str = ""
+    MAINSTREAM_USER_ID: int = 841706
     # User Playlist Path
     USER_PLAYLIST_PATH: str = ""
     # RabbitMQ
