@@ -103,6 +103,7 @@ We normalize by s and p to avoid favoring users or playlists with large librarie
 
 ![Exploration Coefficient Distribution](images_log/image.png)
 
+
 - We are also including some statistics about the exploration coefficient: s
 
 ```
