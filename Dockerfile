@@ -1,22 +1,32 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-buster
+    FROM python:3.11-slim AS build
 
-# Set the working directory to /app
-WORKDIR /app
+    RUN apt-get update && \
+        apt-get install -y --no-install-recommends build-essential git && \
+        rm -rf /var/lib/apt/lists/*
+    
+    WORKDIR /src
+    
+    COPY model_server/pyproject.toml model_server/uv.lock ./model_server/
+    
+    RUN pip install --upgrade pip poetry && \
+        poetry config virtualenvs.create false && \
+        poetry install --no-interaction --only main --no-root
+    
+    FROM python:3.11-slim
+    
+    ENV USER=appuser
+    RUN useradd -m $USER
+    WORKDIR /app
+    USER $USER
+    
+    COPY --from=build /usr/local/lib/python*/site-packages /usr/local/lib/python*/site-packages
+    COPY model_server /app
+    
+    ENV PORT=8000
+    EXPOSE $PORT
+    
+    HEALTHCHECK --interval=30s --timeout=3s CMD \
+      wget -qO- http://localhost:${PORT}/healthz || exit 1
+    
 
-# Copy the requirements.txt into the container at /app
-# we do this separately so that the "expensive" build step (pip install)
-# does not need to be repeated if other files in /app change.
-# COPY requirements.txt /app
-
-# Install any needed packages specified in requirements.txt
-# RUN pip install --trusted-host pypi.python.org -r requirements.txt
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Expose the port on which the app will run
-EXPOSE 8000
-
-# Run the command to start the Flask server
-# CMD ["python","app.py"]
+    CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
