@@ -264,6 +264,7 @@ Max playlists liked per user: 4,339.00
         \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
         $$
         
+
     - **Hit@K:**
         
         Measures the percentage of times the positive playlist appears in the top K ranked results. It answers the question: *"Did we get the right answer in the top K?"*
