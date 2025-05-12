@@ -168,7 +168,7 @@ Max playlists liked per user: 4,339.00
 1. Assign playlist ownership
     1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’).
     2. We will calculate then a ‘priority score’ as below:
-    3. $$
+    $$
     \text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
     $$
     4. Validation positives are excluded from ownership assignment for a given user.
