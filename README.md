@@ -1087,7 +1087,7 @@ I've created a total of 5 namespaces for our application.
 ---
 
 ### [`spotifybuddies-canary`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/canary)  
-**Purpose:** Gradual roll-out environment to validate new image tags under real traffic.  
+**Purpose:** Gradual roll-out environment to validate new model under real traffic.  
 
 **Contains:** spotifybuddies-app Deployment  
 
