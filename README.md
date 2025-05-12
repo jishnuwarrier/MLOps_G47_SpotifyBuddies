@@ -197,6 +197,7 @@ $$
 \mathcal{L}*{\text{BPR}} = -\frac{1}{N} \sum*{(u,i,j)} \log \left( \sigma(\text{score}*{u,i} - \text{score}*{u,j}) \right)
 $$
 
+
 Where:
 
 - sigma is the sigmoid function.
