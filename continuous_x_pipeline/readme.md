@@ -129,6 +129,10 @@ All cluster provisioning and application registration is fully automated with An
     - **Run:**  ```ansible-playbook -i ansible/k8s/inventory/mycluster/ansible.cfg ansible/k8s/kubespray/cluster.yml```
         
         This playbook deploys a self-managed Kubernetes cluster across the three VMs, handling kube-adm, networking, and control-plane HA out-of-the-box.
+
+        The code for running the ansible playbook to create the k8s configuration is in 
+[Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb). Create a jupyter notebook in chameleon and run this jupyter notebook after adding ansible.cfg
+
     
     [nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
         
@@ -209,9 +213,7 @@ I've created a total of 5 namespaces for our application.
 
 ----
 
-The code for running the ansible playbooks are in 
-[Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb)
-
+The jupyter notebook for adding environments, platforms and build.
 [Ansible-platform & build](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible_build.ipynb)
 
 The command ```ansible-playbook -i inventory.yml argocd/argocd_add_platform.yml``` was run to add platforms, after which all the applications could be accessed.
