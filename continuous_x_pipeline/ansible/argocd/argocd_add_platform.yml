@@ -260,8 +260,8 @@
       failed_when: false
       changed_when: false
 
-     - name: Create Airflow app
-       when: airflow_check.rc != 0
+    - name: Create Airflow app
+      when: airflow_check.rc != 0
       command: >
         argocd app create {{ airflow_app }}
           --repo {{ repo_path }}
