@@ -256,6 +256,7 @@ $$
 - We will do our BPR model evaluation during training in a customized way (that is standard for recommendation models).
 - We will pack 1 unseen positive for a given user with 50 negative playlists, and we will measure how often and how high does the model rank the positive playlist.
 - We will use two types of metrics:
+
     - **Hit@K:**
         
         Measures the percentage of times the positive playlist appears in the top K ranked results. It answers the question: *"Did we get the right answer in the top K?"*
