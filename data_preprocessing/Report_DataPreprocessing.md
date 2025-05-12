@@ -146,7 +146,7 @@ Max playlists liked per user: 4,339.00
 
 ```
 
-![Distribution of Liked Playlists per User](images_log/image 1.png)
+![Distribution of Liked Playlists per User](images_log/image_1.png)
 
 ---
 
