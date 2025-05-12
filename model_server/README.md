@@ -77,3 +77,23 @@ Our specific customer is Spotify. Based on our customer, we did a requirement an
         - Through our offline experiments, we found out that our model could run batches of 1000 ([experiment link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/training/sb_inference_model_v2.py)) inputs with significant improvement when compared to sequential predictions.
         - So, to enable that, we modified the prediction function to accommodate batch inference based on the above experiment
             - Implementation [Recommender().predict()](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_server/ml_model/model.py)
+
+# Online Evaluation
+## Closing the feedback Loop
+- To close the feedback loop, we opted for explicit user interaction
+- We created a rudimentary HTML page where we can enter a user_id and it gives out the recommended playlist_id
+- The user chooses which playlist they like
+    - The liked interaction along with the ignored playlist is then sent to the Postgres database based for next iteration of model retraining
+- For the sample client_app, see the [link](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/client_app_sample)
+- (Very rudimentary) UI
+![image.png](./images/feedback_loop.png)
+
+# Monitoring
+- We used Grafana with Prometheus as data source to monitor the "online" environment
+- We made 2 dashboards:
+    - API monitoring
+        - Here, we monitor: API latency, Average API request rate, API fail rate
+    - Model monitoring
+        - Here, we monitor: Total Number of inference, Total Number of Cold User Encountered, Inference time, and the distribution of predictions over time
+
+
