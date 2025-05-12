@@ -780,9 +780,11 @@ Max playlists liked per user: 4,339.00
 ## Part 7) Assign Playlist Ownership
 
 1.  Assign playlist ownership 1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’). 2. We will calculate then a ‘priority score’ as below:
+
     $$
     \text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
     $$
+
         4. Validation positives are excluded from ownership assignment for a given user.
         5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
         6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
@@ -1011,7 +1013,6 @@ All cluster provisioning and application registration is fully automated with An
     [Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb). Create a jupyter notebook in chameleon and run this jupyter notebook after adding ansible.cfg
 
         ![nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
-
 
 3.  **Post-Install Configuration**
     - **Playbook:** [post_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/post_k8s/post_k8s_configure.yml)
