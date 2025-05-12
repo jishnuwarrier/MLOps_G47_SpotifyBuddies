@@ -130,7 +130,7 @@ All cluster provisioning and application registration is fully automated with An
         
         This playbook deploys a self-managed Kubernetes cluster across the three VMs, handling kube-adm, networking, and control-plane HA out-of-the-box.
     
-    [nodes-on-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/images/nodes_on_kubernetes.png)
+    [nodes-on-k8s](./continuous_x_pipeline/images/nodes_on_kubernetes.png)
         
 3. **Post-Install Configuration**
     - **Playbook:** [post_k8s_configure](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible/post_k8s/post_k8s_configure.yml)
@@ -222,7 +222,7 @@ This triggered an Argo Workflow with two steps: a git-clone to fetch the reposit
 
 While the Git clone step successfully cloned the repository into /mnt/workspace (as confirmed by the following output):
 
-![Error](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/images/dockerfile_error.png)
+![Error](./continuous_x_pipeline/images/dockerfile_error.png)
 
 the subsequent Kaniko step failed with the following error: error resolving dockerfile path: please provide a valid path to a Dockerfile within the build context with --dockerfile
 
@@ -237,11 +237,11 @@ The error was during the execution of the file [build-initial.yaml](https://gith
 
 While the Kubernetes infrastructure and ArgoCD integration were successfully set up, all three application environments—staging, canary, and production—failed during runtime due to missing container images. This is the reason that although the ansible notebook ran for each of the 3 environments, the deployment wasn't successful. 
 
-![kubectl logs](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/images/kubectl_logs.png)
+![kubectl logs](./continuous_x_pipeline/images/kubectl_logs.png)
 
 As seen in the ArgoCD UI screenshot, the spotifybuddies-staging, spotifybuddies-canary, and spotifybuddies-production applications are in a "Degraded" state. Correspondingly, the kubectl get pods output confirms that each environment's FastAPI deployment pod is stuck in the ImagePullBackOff state, which indicates Kubernetes is continuously attempting, and failing, to pull the required container image.
 
 
 
-![argocd_degraded](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/images/argocd_degraded.png)
+![argocd_degraded](./continuous_x_pipeline/images/argocd_degraded.png)
 
