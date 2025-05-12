@@ -101,9 +101,9 @@ services:
       timeout: 3s
       retries: 3
     ports:
-      - "7000:80"
+      - "5000:80"
     expose:
-      - "7000"
+      - "5000"
     environment:
       - DEBUG=False
       - REDIS_HOST=redis
@@ -119,4 +119,3 @@ services:
 networks:
   production_net:
     external: true
-
