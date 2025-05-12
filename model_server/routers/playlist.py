@@ -6,6 +6,7 @@ from schemas.playlist import PlaylistRequestSchema, PlaylistResponseSchema
 from ml_model.recommender import get_recommended_playlist
 from services.prometheus import INFERENCE_COUNT, INFERENCE_DIVERSITY
 from dependencies import REDIS_CONN
+from services.rabbitmq import send_message_to_queue
 
 prefix = r"/playlist"
 router = APIRouter(prefix=prefix, tags=["playlist"])
@@ -42,4 +43,16 @@ async def recommend_playlist(
         PlaylistResponseSchema(user_id=user_id, playlists=playlists)
         for user_id, playlists in predictions.items()
     ]
-    # return PlaylistResponseSchema(**response_params)
+
+
+@router.post("/beta_recommend/")
+async def beta_recommend_playlist(
+    body: PlaylistRequestSchema,
+    # cache: REDIS_CONN,
+    # background_task: BackgroundTasks,
+) -> dict:
+    """
+    Beta Endpoint to get the recommended playlist for users
+    """
+    await send_message_to_queue(json.dumps(body.user_ids))
+    return {"status": "send to worker"}
