@@ -20,6 +20,7 @@ class SimpleRecommender(nn.Module):
         return self.linear(x)
 
 
+mainstream_user_id = settings.MAINSTREAM_USER_ID
 # NOTE -> In Real Actual system, we would be fetching the
 # User to Playlist from a datasource/database (Spotify uses vector database)
 # This is the output from User Pairing which is then mapped to
