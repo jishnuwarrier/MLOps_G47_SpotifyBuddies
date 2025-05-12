@@ -94,7 +94,7 @@ class Recommender(metaclass=Singleton):
         all_user_ids = []
         all_playlist_ids = []
         slice_bounds = []  # (user_id, start_idx, end_idx)
-
+        cold_user_no = 0
         for user_id in user_ids:
             playlists = user_to_playlists.get(user_id)
 
@@ -102,6 +102,7 @@ class Recommender(metaclass=Singleton):
                 # Fallback to mainstream user
                 playlists = user_to_playlists.get(mainstream_user_id, [])
                 effective_user_id = mainstream_user_id
+                cold_user_no += 1
             else:
                 effective_user_id = user_id
 
@@ -136,7 +137,7 @@ class Recommender(metaclass=Singleton):
                 top_indices = torch.topk(user_scores, k=topk).indices
                 result[user_id] = [user_playlists[i] for i in top_indices]
 
-        return result
+        return result, cold_user_no
 
 
 pool = None
@@ -153,5 +154,5 @@ def intialize_model():
 
 def make_prediction(user_id: list[int]) -> list[int]:
     if not settings.USE_MODEL:
-        return {user: [user + i for i in range(5)] for user in user_id}
+        return {user: [user + i for i in range(5)] for user in user_id}, 0
     return model.predict(user_id)

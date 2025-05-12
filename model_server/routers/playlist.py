@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks
 
 from schemas.playlist import PlaylistRequestSchema, PlaylistResponseSchema
 from ml_model.recommender import get_recommended_playlist
-from services.prometheus import INFERENCE_COUNT, INFERENCE_DIVERSITY
+from services.prometheus import INFERENCE_COUNT, INFERENCE_DIVERSITY, COLD_USER
 from dependencies import REDIS_CONN
 from services.rabbitmq import send_message_to_queue
 
@@ -14,10 +14,7 @@ router = APIRouter(prefix=prefix, tags=["playlist"])
 
 def update_prometheus(predictions: dict[int, list[int]]):
     for predictions in predictions.values():
-        [
-            INFERENCE_DIVERSITY.labels(model="playlist_recommender").set(prediction)
-            for prediction in predictions
-        ]
+        [INFERENCE_DIVERSITY.observe(prediction) for prediction in predictions]
 
 
 @router.post("/recommend/")
@@ -29,8 +26,7 @@ async def recommend_playlist(
     """
     Endpoint to get the recommended playlist for users
     """
-    predictions: dict[int, list[int]] = await get_recommended_playlist(body.user_ids)
-
+    predictions, cold_user_no = await get_recommended_playlist(body.user_ids)
     # Updating the Redis Cache
     redis_payload = {k: json.dumps(v) for k, v in predictions.items()}
     await cache.hset(name="playlist", mapping=redis_payload)
@@ -38,6 +34,7 @@ async def recommend_playlist(
     background_task.add_task(update_prometheus, predictions)
 
     INFERENCE_COUNT.inc(amount=len(predictions))
+    COLD_USER.inc(amount=cold_user_no)
 
     return [
         PlaylistResponseSchema(user_id=user_id, playlists=playlists)
