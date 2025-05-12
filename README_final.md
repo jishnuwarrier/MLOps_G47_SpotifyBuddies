@@ -362,7 +362,7 @@ tune.run(
 - The request body of our API endpoint is simply a list of `user_id` . Our output consists of map of `users_id`  mapped to the list of top-n recommended `playlist_id` for them.
     - Our API response output is strictly for testing and logging the predictions. We don’t serve the Predictions directly to the users from our Server!
 
-![image.png](.model_server/images/api_endpoint.png)
+![image.png](./model_server/images/api_endpoint.png)
 
 ## Identify Requirements
 
