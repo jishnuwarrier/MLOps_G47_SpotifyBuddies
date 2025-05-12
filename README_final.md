@@ -186,7 +186,6 @@ $$
 $$
 
 
-
 - u: embedding vector for user uuu
 - i: embedding vector for positive playlist iii
 - j: embedding vector for negative playlist jjj
