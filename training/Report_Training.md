@@ -58,7 +58,7 @@ We will cover these models in detail below, in addition to the training process 
 - 99th percentile : 50.0
 </aside>
 
-![image.png](image.png)
+![Distribution of Neighbor Count per User](images_log/image.png)
 
 - We also explore ‘user popularity’. We exclude users that were never selected as a neighbor. The median is 57, and on average each user is the neighbor of 94 other users. Some users are extremely popular, with over 600 selections.
 
@@ -76,7 +76,7 @@ User Popularity (Times a User Was Paired as Neighbor):
 - 99th percentile : 609.0
 </aside>
 
-![image.png](image%201.png)
+![Distribution of User Popularity](images_log/image_1.png)
 
 - Finally we check the playlist availability through neighbors. We can see a pretty soft shape, median is 222 playlists. Note that some users will have access to over 400 playlists. This could delay inference for that user. We take care of that next.
 
@@ -95,7 +95,7 @@ Playlists Accessible via Neighbors:
 - 99th percentile : 841.0
 </aside>
 
-![image.png](image%202.png)
+![Distribution of Playlist Access via Neighbors](images_log/image_2.png)
 
 ### Final step: create dictionary that quickly maps user_id to a list of playlist id’s belonging to its neighbors. This is used for inference.
 
@@ -272,20 +272,20 @@ tune.run(
     - Hit@5 = 0.72
     - Hit@10 = 0.90
 
-![image.png](image%203.png)
+![MRR across 5 epochs](images_log/image_3.png)
 
 - Hit@5 is a very important metric because our model serving service will recommend 5 playlists to users. We can see that in 72% of cases a positive playlist existing in a bag with 50 negative playlists, will be ranked inside the top 5 playlists.
 
-![image.png](image%204.png)
+![Hit@5 across 5 epochs](images_log/image_4.png)
 
 ### Ray Tune results
 
 - With respect to Ray Tune, we are including below a comparison of the experiments that Ray Tune handled. Since we ran Ray Tune just one time on the full dataset, we were able to explore only variations on the learning rate.
 
-![image.png](image%205.png)
+![Comparison of learning rates for Ray Tune experiments](images_log/image_5.png)
 
 - We can see that Ray Tune identified some space for improvement, but it was very minor. Probably we need to experiment further in order to discover more significant improvements. Basically we tried too little of variations of learning rates, that allowed to increase MRR from 0.47889 to 0.47912, which is basically negligible.
 
-![image.png](image%206.png)
+![Comparison of metrics (MRR and Hit@5) for Ray Tune experiments](images_log/image_6.png)
 
 - Probably it would have been more interesting to explore another hyperparameter, such as embedding dimensions of the BPR Model, but still Ray Tune proved to be a valuable tool at exploring hyperspace optimization in a consistent way.
