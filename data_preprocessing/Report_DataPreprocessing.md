@@ -256,6 +256,11 @@ $$
 - We will do our BPR model evaluation during training in a customized way (that is standard for recommendation models).
 - We will pack 1 unseen positive for a given user with 50 negative playlists, and we will measure how often and how high does the model rank the positive playlist.
 - We will use two types of metrics:
+
+    - **Hit@K:**
+        
+        Measures the percentage of times the positive playlist appears in the top K ranked results. It answers the question: *"Did we get the right answer in the top K?"*
+        
     - **MRR (Mean Reciprocal Rank)**
         
         Measures the average of the reciprocal ranks of the true positive in the ranked list. A higher MRR means the model is ranking positives closer to the top.
@@ -265,10 +270,6 @@ $$
 $$
         
 
-    - **Hit@K:**
-        
-        Measures the percentage of times the positive playlist appears in the top K ranked results. It answers the question: *"Did we get the right answer in the top K?"*
-        
 - Therefore, we need to prepare validation batches for each user. 1 unseen positive packed with 50 negatives. Negatives can’t be playlists that were positives in training.
 - For a given user, we will have both unseen and seen negatives (seen negatives = negatives that were negatives for that user in training).
 - The validation positives are unseen for a given user, but they might have been a positive for a different user during training.

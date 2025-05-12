@@ -7,18 +7,22 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
 # === CONFIGURATION ===
-PKL_PATH = "/path/to/users.pkl"  # Your actual pickle path
-ENDPOINT_URL = "http://129.114.25.165:5000/api/playlist/recommend/"
-RUN_INTERVAL_MINUTES = 10
-USERS_PER_RUN = 100
-MAX_DELAY_SECONDS = 480  # 8 minutes delay range
-TIMEOUT_BUFFER = 30      # Additional buffer time
+PKL_PATH = "/mnt/object/positives_splits/test_positives.pkl"
+ENDPOINT_URL = "http://129.114.25.165:8000/api/playlist/recommend/"
+FEEDBACK_URL = "http://129.114.25.165:5000/feedback"
+RUN_INTERVAL_MINUTES = 1
+USERS_PER_RUN = 25
+MAX_DELAY_SECONDS = 30  # 8 minutes delay range
+TIMEOUT_BUFFER = 15      # Additional buffer time
 
 
 # === Load users once ===
 def load_users():
+    users_dict = {}
     with open(PKL_PATH, "rb") as f:
-        return pickle.load(f)
+        users_dict = pickle.load(f)
+    user_ids = [user_id for user_id in users_dict]
+    return user_ids # list of user_ids
 
 def load_users1():
     users = []
@@ -30,7 +34,7 @@ def load_users1():
     return users
 
 # Global variable to hold the loaded users
-users = load_users1()
+users = load_users()
 
 
 # === Main simulation function ===
@@ -40,16 +44,41 @@ def simulate_users_random_timing(**context):
     selected_users = users[:USERS_PER_RUN]
     logger.info(f"[{datetime.now()}] Picked {len(selected_users)} users")
 
-    async def send_request(user, session, delay):
+    async def send_request(user_id, session, delay):
         await asyncio.sleep(delay)
-        payload = {"user_ids": user['user_ids']}
+        payload = {"user_ids": [user_id]}
         try:
             logger.info(f"[{datetime.now()}] Delay={delay:.2f}s Sending: {payload}")
             async with session.post(ENDPOINT_URL, json=payload) as resp:
-                resp_text = await resp.text()
-                logger.info(f"[{datetime.now()}] Response for user [{resp.status}]: {resp_text}")
+                resp_json = await resp.json()
+                logger.info(f"[{datetime.now()}] Response for user [{resp.status}]: {resp_json}")
+                return user_id, resp_json
         except Exception as e:
             logger.error(f"[{datetime.now()}] Error for user: {e}")
+            return user_id, {}
+
+    async def send_feedback(session, user_id, playlist_ids):
+        print(playlist_ids, type(playlist_ids))
+
+        if not playlist_ids or len(playlist_ids) < 2:
+            print(f"Insufficient playlists for user {user_id}, skipping feedback.")
+            return
+
+        positive = random.choice(playlist_ids)
+        ignored = [pid for pid in playlist_ids if pid != positive]
+
+        payload = {
+            "user_id" : user_id,
+            "like_playlist": positive,
+            "other_playlists": ignored
+        }
+
+        try:
+            async with session.post(FEEDBACK_URL, json=payload) as response:
+                resp_text = await response.text()
+                print(f"feedback response for user {user_id}: {resp_text}")
+        except Exception as e:
+            print(f"Error in send_feedback for user {user_id}: {e}")
 
     async def simulate_all():
         async with aiohttp.ClientSession() as session:
@@ -57,10 +86,17 @@ def simulate_users_random_timing(**context):
                 send_request(user, session, delay=random.uniform(0, MAX_DELAY_SECONDS))
                 for user in selected_users
             ]
-            try:
-                await asyncio.wait_for(asyncio.gather(*tasks), timeout=MAX_DELAY_SECONDS + TIMEOUT_BUFFER)
-            except asyncio.TimeoutError:
-                logger.error(f"[{datetime.now()}] Timeout: Not all requests completed in time.")
+
+            responses = await asyncio.gather(*tasks)
+            print(responses)
+
+            feedback_tasks = []
+            for user_id, response_json in responses:
+                print(user_id, response_json)
+                playlist_ids = response_json[0].get('playlists', [])
+                feedback_tasks.append(send_feedback(session, user_id, playlist_ids))
+
+            await asyncio.gather(*feedback_tasks)
 
     asyncio.run(simulate_all())
     logger.info(f"[{datetime.now()}] Simulation finished.")
