@@ -123,7 +123,6 @@ Max: 0.9900
 - Finally, we compute the scores for all user-playlist pairs. The min score sits between 0.0013 and 0.0016, the max score is around 0.49, and the medians core is around 0.125.
 
 ---
-
 ---
 
 ## Part 5) Rank playlists per user and tag ‘liked’ playlists
