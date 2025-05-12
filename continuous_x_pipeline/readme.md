@@ -209,6 +209,11 @@ I've created a total of 5 namespaces for our application.
 
 ----
 
+The code for running the ansible playbooks are in 
+[Ansible-k8s](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible.ipynb)
+
+[Ansible-platform & build](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/ansible_build.ipynb)
+
 The command ```ansible-playbook -i inventory.yml argocd/argocd_add_platform.yml``` was run to add platforms, after which all the applications could be accessed.
 For example, MLFlow can be accessed using - [Link](http://129.114.25.50:8000/)
 
@@ -244,4 +249,5 @@ As seen in the ArgoCD UI screenshot, the spotifybuddies-staging, spotifybuddies-
 
 
 ![argocd_degraded](./continuous_x_pipeline/images/argocd_degraded.png)
+
 
