@@ -185,6 +185,10 @@ $$
 \text{score}_{u,i} = \boldsymbol{u}^\top \cdot \boldsymbol{i}
 $$
 
+$$
+\text{score}_{u,j} = \boldsymbol{u}^\top \cdot \boldsymbol{j}
+$$
+
 
 - u: embedding vector for user uuu
 - i: embedding vector for positive playlist iii
@@ -196,7 +200,6 @@ $$
 $$
 \mathcal{L}*{\text{BPR}} = -\frac{1}{N} \sum*{(u,i,j)} \log \left( \sigma(\text{score}*{u,i} - \text{score}*{u,j}) \right)
 $$
-
 
 Where:
 
@@ -1088,7 +1091,7 @@ I've created a total of 5 namespaces for our application.
 ---
 
 ### [`spotifybuddies-canary`](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/k8s/canary)  
-**Purpose:** Gradual roll-out environment to validate new model under real traffic.  
+**Purpose:** Gradual roll-out environment to validate new image tags under real traffic.  
 
 **Contains:** spotifybuddies-app Deployment  
 
