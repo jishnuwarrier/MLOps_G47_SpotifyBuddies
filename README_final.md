@@ -48,7 +48,7 @@
 ### Summary of extra difficulty points that we’ll aim for
 
 | Unit | Topic | Difficulty point | Status |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | 1 | ML Ops Intro Unit | Using multiple models (we’ll be using two models) | Completed |
 | 5 | Model training infrastructure and platform | Ray Tune | Completed |
 | 6 | Model serving and monitoring | Develop multiple options for serving | Semi-completed |
