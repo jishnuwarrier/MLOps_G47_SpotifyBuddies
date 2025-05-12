@@ -169,9 +169,9 @@ Max playlists liked per user: 4,339.00
 1. Assign playlist ownership
     1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’).
     2. We will calculate then a ‘priority score’ as below:
-    $$
-    \text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
-    $$
+$$
+\text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
+$$
     4. Validation positives are excluded from ownership assignment for a given user.
     5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
     6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
@@ -260,9 +260,9 @@ Max playlists liked per user: 4,339.00
         
         Measures the average of the reciprocal ranks of the true positive in the ranked list. A higher MRR means the model is ranking positives closer to the top.
         
-    $$
-    \text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
-    $$
+$$
+\text{MRR} = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{\text{rank}_i}
+$$
         
 
     - **Hit@K:**
