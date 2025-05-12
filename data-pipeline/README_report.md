@@ -35,7 +35,11 @@ Contains data for:
 
 ## Data Dashboard
 
-We use a metabase dashboard to show the metrics related to data and data quality. For the training data, we show metrics like distinct users, average blocks per user etc. For ensuring data quality of the recommendation system, we need to make sure that for a user, we have 70%-20%-10% split of the positive playlist in train, validation and test dataset respectively. For this reason, we display metrics like
+We use a metabase dashboard to show the metrics related to data and data quality.
+
+For the Training data, we show metrics like distinct users, average blocks per user etc. Let's define a user-block as `(user_id, playlist_id_positive, playlist_id_negative)` triplets where we group by `user_id` and `playlist_id_positive`. The list of `playlist_id_negative`s for a particular `(user_id, playlist_id_positive)` means the user prefers the `playlist_id_positive` over the playlists in `playlist_id_negative` list. For ensuring data quality of the recommendation system, we need to make sure that for a user-block we have only 1 playlist_id_positive.
+
+For the Feedback data, we show metrics like number of daily users giving feedback, number of weekly users giving feedback etc. We also show average score per day to help catch any bias in recommendations. For data integrity, similar to training we show if there are any invalid user-blocks. We show the feedback over time for retraining threshold. We also show th cumulative feedback growth - this is to know when the dataset is large enough to retrain. We also display distinct users - since we want to check diversity in the feedback and not have power users.
 
 ### Data Leakage
 

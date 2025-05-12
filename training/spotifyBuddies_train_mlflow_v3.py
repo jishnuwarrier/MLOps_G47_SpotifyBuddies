@@ -5,7 +5,7 @@ SEED = 42
 USE_RAY_TUNE = True
 USE_MLFLOW = True
 RUN_ON_CHAMELEON = True
-TRAIN_FULL_DATASET = False   # Select False for training on a toy dataset for testing and quick debugging
+TRAIN_FULL_DATASET = True   # Select False for training on a toy dataset for testing and quick debugging
 
 # === 2. IMPORT DEPENDENCIES ===
 import os
@@ -22,8 +22,8 @@ import mlflow
 import mlflow.pytorch
 import re
 import shutil
-from ray import tune
 from ray.train import report
+from ray import tune
 
 # === 3. DIRECTORIES AND SAVING OPTIONS ===
 print("-Imports done. Setting directories now.")
@@ -71,21 +71,20 @@ EMBEDDING_DIM = 128
 BATCH_SIZE = 16384
 GRAD_ACCUM_STEPS = 2
 LEARNING_RATE = 0.005
-EPOCHS = 1
+EPOCHS = 5
 EARLY_STOPPING_PATIENCE = 5
 RESUME_FROM_CHECKPOINT = False
 
 # === 5. MLFLOW PARAMETERS ===
-MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment4_RayTune'
+MLFLOW_EXPERIMENT_NAME = 'SpotifyBuddies_experiment5_RayTune'
 MLFLOW_TAGS = {
     "platform": "chameleon_cloud",
-    "mode": "toy",
+    "mode": "full",
     "run_type": "baseline"
 }
 
 # === 6. RAY TUNE PARAMETERS ===
 try:
-    from ray import tune
     RAY_TUNE_AVAILABLE = True
 except ImportError:
     RAY_TUNE_AVAILABLE = False
@@ -287,7 +286,11 @@ def train_fn(config):
             }, step=epoch)
 
         if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
-            report(train_loss=avg_train_loss, val_mrr=val_mrr, **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates})
+            report(metrics={
+                "train_loss": avg_train_loss,
+                "val_mrr": val_mrr,
+                **{f"hit@{k}": val_hit_rates[k] for k in val_hit_rates}
+            })
 
         # === Save best model ===
         if val_mrr > best_val_mrr:
@@ -378,13 +381,24 @@ if USE_RAY_TUNE and RAY_TUNE_AVAILABLE:
     #     resources_per_trial={"cpu": 4, "gpu": 0.5}
     # )
 
+    # tune.run(
+    #     train_with_resources,
+    #     config=RAY_SEARCH_SPACE,
+    #     metric="val_mrr",
+    #     mode="max",
+    #     num_samples=RAY_NUM_SAMPLES,
+    #     name="bpr_hpo"
+    # )
+
     tune.run(
         train_with_resources,
         config=RAY_SEARCH_SPACE,
         metric="val_mrr",
         mode="max",
         num_samples=RAY_NUM_SAMPLES,
-        name="bpr_hpo"
+        name="bpr_hpo",
+        storage_path="~/ray_results",   # Replaces local_dir
+        resume="AUTO"
     )
 
 else:

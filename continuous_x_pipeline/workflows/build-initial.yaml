@@ -3,8 +3,8 @@ kind: Workflow
 metadata:
   generateName: kaniko-pvc-build-
 spec:
-  entrypoint: compose-build-flow
-
+  entrypoint: kaniko-build-flow
+  hostNetwork: true
   volumeClaimTemplates:
   - metadata:
       name: workdir
@@ -15,15 +15,16 @@ spec:
           storage: 1Gi
 
   templates:
-  - name: compose-build-flow
+  - name: kaniko-build-flow
     steps:
-      - - name: clone-repo
-          template: git-clone
-      - - name: compose-build
-          template: compose-build
+    - - name: clone-repo
+        template: git-clone
+      - name: kaniko-build
+        template: kaniko
 
   - name: git-clone
-    dnsPolicy: "None"
+    hostNetwork: true
+    dnsPolicy: None
     dnsConfig:
       nameservers:
         - 8.8.8.8
@@ -33,62 +34,33 @@ spec:
       command: [sh, -c]
       args:
         - |
-          echo "---- PWD ----"; pwd
-          echo "---- TOP LEVEL ----"; ls -al
-          echo "---- LOOK FOR SCRIPT ----"
+          set -ex
           mkdir -p /mnt/workspace
           MAX_RETRIES=5
           i=1
           while [ $i -le $MAX_RETRIES ]; do
-            echo "Attempt $i of $MAX_RETRIES: Cloning repo..."
             git clone https://github.com/AguLeon/MLOps_G47_SpotifyBuddies.git /mnt/workspace && break
-            echo "Git clone failed. Retrying in 5 seconds..."
             i=$((i+1))
             sleep 5
           done
-          if [ ! -d /mnt/workspace/.git ]; then
-            echo "Git clone failed after $MAX_RETRIES attempts."
-            exit 1
-          fi
+          ls /mnt/workspace
     volumeMounts:
       - name: workdir
         mountPath: /mnt/workspace
 
-  - name: compose-build
+  - name: kaniko
+    hostNetwork: true
     container:
-      name: main
-      image: docker:24-cli
-      workingDir: /mnt/workspace
-      env:
-        - name: DOCKER_HOST
-          value: tcp://localhost:2375
-      command: [sh, -c]
+      image: gcr.io/kaniko-project/executor:latest
       args:
-        - |
-          echo "---- PWD ----"; pwd
-          echo "---- TOP LEVEL ----"; ls -al
-          echo "---- LOOK FOR SCRIPT ----"
-          find /mnt/workspace -maxdepth 2 -name 'run_docker_compose.sh' || true
-          chmod +x docker/run_docker_compose.sh
-          ./docker/run_docker_compose.sh \
-            --push \
-            --registry registry.kube-system.svc.cluster.local:5000
-      volumeMounts:
-        - name: workdir
-          mountPath: /mnt/workspace
-
-    sidecars:
-      - name: dind
-        image: docker:24-dind
-        securityContext:
-          privileged: true
-        command: ["dockerd"]
-        args:
-          - --host=tcp://0.0.0.0:2375
-          - --insecure-registry=registry.kube-system.svc.cluster.local:5000
-        env:
-          - name: DOCKER_TLS_CERTDIR
-            value: "" 
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/workspace
+        - --dockerfile=/mnt/workspace/Dockerfile
+        - --context=/mnt/workspace
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:staging-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:canary-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/spotifybuddies-app:production-1.0.0
+        - --insecure
+        - --insecure-pull
+        - --skip-tls-verify-pull
+    volumeMounts:
+      - name: workdir
+        mountPath: /mnt/workspace

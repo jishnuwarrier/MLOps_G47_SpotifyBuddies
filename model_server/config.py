@@ -11,6 +11,15 @@ class Settings(BaseSettings):
 
     # ML Model Path
     MODEL_PATH: str = ""
+    MODEL_CONFIG_PATH: str = ""
+    # User Playlist Path
+    USER_PLAYLIST_PATH: str = ""
+    # RabbitMQ
+    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "user"
+    RABBITMQ_PWD: str = "1234"
+    BETA: bool = True
 
     model_config = SettingsConfigDict(env_file=".env")
 

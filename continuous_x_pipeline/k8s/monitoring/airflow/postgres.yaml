@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: airflow-postgres
+  namespace: spotifybuddies-monitoring
+spec:
+  serviceName: "airflow-postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-postgres
+  template:
+    metadata:
+      labels:
+        app: airflow-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: bitnami/postgresql:15
+          env:
+            - name: POSTGRESQL_USERNAME
+              value: airflow
+            - name: POSTGRESQL_PASSWORD
+              value: airflow
+            - name: POSTGRESQL_DATABASE
+              value: airflow
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-postgres
+  namespace: spotifybuddies-monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: airflow-postgres
+  ports:
+    - port: 5432
+      targetPort: postgres
+      name: postgres

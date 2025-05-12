@@ -103,4 +103,14 @@ du -h --max-depth=1 ~ | sort -hr | head -n 20
 
 # check which dirs are taking up space
 du -sh /path/to/directory/*/ | sort -h
+
+# remove dangling stuff from docker
+docker system prune -a --volumes
+
+# loggin to postgres
+docker exec -it postgres psql -U postgres -d postgres
+
+# loggin into the container
+docker exec -it <container_name> bash
+
 ```

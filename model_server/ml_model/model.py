@@ -1,3 +1,5 @@
+import pickle
+from collections import Counter
 from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
 
@@ -18,6 +20,30 @@ class SimpleRecommender(nn.Module):
         return self.linear(x)
 
 
+# NOTE -> In Real Actual system, we would be fetching the
+# User to Playlist from a datasource/database (Spotify uses vector database)
+# This is the output from User Pairing which is then mapped to
+# the actual playlists that belong to neighbours
+if settings.USE_MODEL:
+    with open(settings.USER_PLAYLIST_PATH, "rb") as f:
+        user_to_playlists = pickle.load(f)
+        print("User-Playlist-Loaded")
+
+    playlist_counter = Counter()
+    for playlists in user_to_playlists.values():
+        playlist_counter.update(playlists)
+
+    # Step 2: Score each user by the *total popularity* of their playlists
+    user_scores = {
+        user: sum(playlist_counter[p] for p in playlists)
+        for user, playlists in user_to_playlists.items()
+    }
+
+    # Step 3: Find user with highest popularity score
+    mainstream_user_id = max(user_scores.items(), key=lambda x: x[1])[0]
+    print(f"Most mainstream user: {mainstream_user_id}")
+
+
 @dataclass
 class Recommender(metaclass=Singleton):
     _model: nn.Module | None = None
@@ -30,7 +56,11 @@ class Recommender(metaclass=Singleton):
         """
         # Load trained model
         if settings.USE_MODEL:
-            self._model = torch.jit.load(path, map_location=self.device)
+            self._model = torch.load(
+                path,
+                map_location=self.device,
+                weights_only=False,
+            )
         else:
             self._model = SimpleRecommender()
             with torch.no_grad():
@@ -41,7 +71,12 @@ class Recommender(metaclass=Singleton):
         self._model.eval()
 
         # TorchScript Optimization
-        self._model = torch.jit.freeze(self._model)
+        # self._model = torch.jit.freeze(self._model)
+
+    def score(self, user_ids, playlist_ids):
+        u = self._model.user_embeddings(user_ids)
+        p = self._model.playlist_embeddings(playlist_ids)
+        return (u * p).sum(1)
 
     def preprocess(self, user_ids: list[int]) -> torch.Tensor:
         """
@@ -54,27 +89,53 @@ class Recommender(metaclass=Singleton):
         )
         # return torch.tensor([user_id], dtype=torch.float32).to(self.device)
 
-    def predict(self, user_ids: list[int]) -> dict[int, list[int]]:
-        """
-        Make Prediction using the model with the input
-        """
+    def predict(self, user_ids: list[int], top_k=5):
+        all_user_ids = []
+        all_playlist_ids = []
+        slice_bounds = []  # (user_id, start_idx, end_idx)
 
-        # Preprocess the input
-        input = self.preprocess(user_ids)
+        for user_id in user_ids:
+            playlists = user_to_playlists.get(user_id)
+
+            if not playlists:
+                # Fallback to mainstream user
+                playlists = user_to_playlists.get(mainstream_user_id, [])
+                effective_user_id = mainstream_user_id
+            else:
+                effective_user_id = user_id
+
+            if playlists:
+                start = len(all_user_ids)
+                all_user_ids.extend([effective_user_id] * len(playlists))
+                all_playlist_ids.extend(playlists)
+                end = len(all_user_ids)
+                slice_bounds.append(
+                    (user_id, start, end)
+                )  # Keep original user_id for output
+            else:
+                slice_bounds.append((user_id, None, None))
+
+        if not all_user_ids:
+            return {user_id: [] for user_id in user_ids}
+
+        user_tensor = torch.LongTensor(all_user_ids)
+        playlist_tensor = torch.LongTensor(all_playlist_ids)
 
         with torch.inference_mode():
-            recommendations = self._model(input).reshape(-1).cpu().tolist()
-            if not settings.USE_MODEL:
-                recommendations = [[rec] for rec in recommendations]
-            # recommendations = self._model(input).cpu().item()
+            scores = self.score(user_tensor, playlist_tensor)
 
-        # Create a dictionary of user_ids as key and playlist_id as value
-        results = {
-            user_id: playlist_id
-            for user_id, playlist_id in zip(user_ids, recommendations)
-        }
+        result = {}
+        for user_id, start, end in slice_bounds:
+            if start is None:
+                result[user_id] = []
+            else:
+                user_scores = scores[start:end]
+                user_playlists = all_playlist_ids[start:end]
+                topk = min(top_k, len(user_scores))
+                top_indices = torch.topk(user_scores, k=topk).indices
+                result[user_id] = [user_playlists[i] for i in top_indices]
 
-        return results
+        return result
 
 
 pool = None
@@ -89,5 +150,7 @@ def intialize_model():
     print("Intialize Child Process for ML inference")
 
 
-def make_prediction(user_id: [int]) -> list[int]:
+def make_prediction(user_id: list[int]) -> list[int]:
+    if not settings.USE_MODEL:
+        return {user: [user + i for i in range(5)] for user in user_id}
     return model.predict(user_id)

@@ -37,6 +37,7 @@ services:
     volumes:
       - /mnt/block/postgres_data:/var/lib/postgresql/data
         #- ../docker:/docker-entrypoint-initdb.d
+
     networks:
       - production_net
     # healthcheck:
