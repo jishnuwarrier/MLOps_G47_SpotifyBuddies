@@ -785,16 +785,16 @@ Max playlists liked per user: 4,339.00
 ## Part 7) Assign Playlist Ownership
 
 1.  Assign playlist ownership 1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’).
-2.  2. We will calculate then a ‘priority score’ as below:
+2.  We will calculate then a ‘priority score’ as below:
 
     $$
     \text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
     $$
 
-    4. Validation positives are excluded from ownership assignment for a given user.
-    5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
-    6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
-    7. Let’s explore some statistics about playlist ownership below. We see that on average users own 4.6 playlists, with a median of 2 playlists. We also explore some ‘ inequality’ metrics: 1% of users own 15% of playlists, and 25% own 72% of playlists. We believe this is quite realistic, as in music streaming services not all users are heavy producers of their own playlists, and some users are ‘power users’  that create many playlists. Of course these are mere assumptions.
+4. Validation positives are excluded from ownership assignment for a given user.
+5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
+6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
+7. Let’s explore some statistics about playlist ownership below. We see that on average users own 4.6 playlists, with a median of 2 playlists. We also explore some ‘ inequality’ metrics: 1% of users own 15% of playlists, and 25% own 72% of playlists. We believe this is quite realistic, as in music streaming services not all users are heavy producers of their own playlists, and some users are ‘power users’  that create many playlists. Of course these are mere assumptions.
 
     ```
     📊
