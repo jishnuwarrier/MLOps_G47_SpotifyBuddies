@@ -672,6 +672,8 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 ---
 
+[Data Preprocessing notebook](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/data_preprocessing/SpotifyBuddies_Preprocessing_AL_v2.ipynb)
+
 ## Part 1) Raw data and initial processing
 
 - We load raw data both from ENTP and MPD. Nothing is done here to MPD data, apart from putting the raw slices in a directory.
