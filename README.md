@@ -540,7 +540,7 @@ For feedback data, we track metrics such as:
 
 ## Online Data
 
-[Airflow script for user simulation](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_2_inference.py)>)
+[Airflow script for user simulation](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_2_inference.py)
 
 User interaction with the recommendation system is simulated using an **Airflow script**. This script utilizes the **test data split** stored in an object store and runs as a scheduled job every **10 minutes**. In each run, it randomly selects a subset of users and invokes the FastAPI `/recommend` endpoint over a 10-minute window to fetch playlist recommendations. Each API call returns **5 playlist recommendations** for a given user.
 
@@ -605,7 +605,7 @@ Response
 
 ## Data for Retraining
 
-[Airflow script to extract feedback data for retraining](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_extract_prod_data.py)>)
+[Airflow script to extract feedback data for retraining](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/blob/main/model_monitoring/dags/pipeline_extract_prod_data.py)
 
 The **user feedback data stored in PostgreSQL** is extracted on a weekly basis using a separate Airflow script. This script processes the data by splitting it into **training, validation, and test sets**, and converts it into the appropriate format required for retraining the model.
 
