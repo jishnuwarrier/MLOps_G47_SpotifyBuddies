@@ -784,85 +784,86 @@ Max playlists liked per user: 4,339.00
 
 ## Part 7) Assign Playlist Ownership
 
-1.  Assign playlist ownership 1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’). 2. We will calculate then a ‘priority score’ as below:
+1.  Assign playlist ownership 1. We will assign playlist ownership in principle to the user that has the highest score for that playlist. However, we will also normalize by the user’s song library size, to avoid assigning a playlist to a user only because their song library is huge (’generalist user’).
+2.  2. We will calculate then a ‘priority score’ as below:
 
     $$
     \text{priority} = \frac{\text{score}}{\sqrt{\text{user's song count}}}
     $$
 
-        4. Validation positives are excluded from ownership assignment for a given user.
-        5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
-        6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
-        7. Let’s explore some statistics about playlist ownership below. We see that on average users own 4.6 playlists, with a median of 2 playlists. We also explore some ‘ inequality’ metrics: 1% of users own 15% of playlists, and 25% own 72% of playlists. We believe this is quite realistic, as in music streaming services not all users are heavy producers of their own playlists, and some users are ‘power users’  that create many playlists. Of course these are mere assumptions.
+    4. Validation positives are excluded from ownership assignment for a given user.
+    5. We also impose a maximum amount of playlists owned by a single user to 100 playlists.
+    6. The algorithm iterates over playlists and looks into the highest scoring users for that playlist. It guarantees that every single playlist will be owned by one and only one user.
+    7. Let’s explore some statistics about playlist ownership below. We see that on average users own 4.6 playlists, with a median of 2 playlists. We also explore some ‘ inequality’ metrics: 1% of users own 15% of playlists, and 25% own 72% of playlists. We believe this is quite realistic, as in music streaming services not all users are heavy producers of their own playlists, and some users are ‘power users’  that create many playlists. Of course these are mere assumptions.
 
-        ```
-        📊
+    ```
+    📊
 
-        Playlist Ownership Stats (Global):
+    Playlist Ownership Stats (Global):
 
-        - Users with ownership: 39,653
-        - Min owned : 1
-        - Max owned : 100
-        - Average owned : 4.57
-        - Median owned : 2.0
-        - 25th percentile : 1.0
-        - 75th percentile : 4.0
-        ```
+    - Users with ownership: 39,653
+    - Min owned : 1
+    - Max owned : 100
+    - Average owned : 4.57
+    - Median owned : 2.0
+    - 25th percentile : 1.0
+    - 75th percentile : 4.0
+    ```
 
-        ![Histogram of Playlist Ownership per User](data_preprocessing/images_log/image_2.png)
+    ![Histogram of Playlist Ownership per User](data_preprocessing/images_log/image_2.png)
 
-        ```
-        📊
+    ```
+    📊
 
-        Playlist Ownership Inequality Stats:
-         - Top 1% own 15.34% of playlists
-         - Top 5% own 37.29% of playlists
-         - Top 10% own 50.83% of playlists
-         - Top 25% own 71.68% of playlists
-         - Gini coefficient       : 0.6033
+    Playlist Ownership Inequality Stats:
+     - Top 1% own 15.34% of playlists
+     - Top 5% own 37.29% of playlists
+     - Top 10% own 50.83% of playlists
+     - Top 25% own 71.68% of playlists
+     - Gini coefficient       : 0.6033
 
-        ```
+    ```
 
-        ![Lorenz Curve of Playlist Ownership (straight line is perfect equality)](data_preprocessing/images_log/image_3.png)
+    ![Lorenz Curve of Playlist Ownership (straight line is perfect equality)](data_preprocessing/images_log/image_3.png)
 
-        ---
+    ---
 
-        ---
+    ---
 
-        ## Part 8) Generate triplets training dataset!
+    ## Part 8) Generate triplets training dataset!
 
-        - Bayesian Personalized Ranking (BPR) models are typically trained using triplets that express a **relative user preference**.
-        - Each triplet has the form: `(user_id, positive_playlist_id, negative_playlist_id)`.
-        - We use the training split of positive playlists, and for each of them, we generate **4 negatives**.
-        - Negative playlists are drawn from a precomputed pool of candidates:
-            - **Top 20% (by score)** are considered **hard negatives**—they were close to being positives and help the model learn to distinguish fine-grained preferences.
-            - The remaining 80% are **easy negatives**.
-        - For each positive, we sample:
-            - Half the negatives from the **hard pool**, and
-            - The other half from the **easy pool**.
-        - We avoid including playlists that were **owned or already positively labeled**, ensuring clean contrastive signals.
-        - The script also creates a **toy dataset** for 5% of users to support fast debugging and experimentation.
-        - Finally we shuffle and save the file in torch format.
-        - Below we can see some statistics about the triplets. On average, each user has 942 triplets, with a median of 576.
+    - Bayesian Personalized Ranking (BPR) models are typically trained using triplets that express a **relative user preference**.
+    - Each triplet has the form: `(user_id, positive_playlist_id, negative_playlist_id)`.
+    - We use the training split of positive playlists, and for each of them, we generate **4 negatives**.
+    - Negative playlists are drawn from a precomputed pool of candidates:
+        - **Top 20% (by score)** are considered **hard negatives**—they were close to being positives and help the model learn to distinguish fine-grained preferences.
+        - The remaining 80% are **easy negatives**.
+    - For each positive, we sample:
+        - Half the negatives from the **hard pool**, and
+        - The other half from the **easy pool**.
+    - We avoid including playlists that were **owned or already positively labeled**, ensuring clean contrastive signals.
+    - The script also creates a **toy dataset** for 5% of users to support fast debugging and experimentation.
+    - Finally we shuffle and save the file in torch format.
+    - Below we can see some statistics about the triplets. On average, each user has 942 triplets, with a median of 576.
 
-        ```
-        📊
+    ```
+    📊
 
-        Stats for one slice of triplets:
+    Stats for one slice of triplets:
 
-        - Users in slice : 945
-        - Total triplets : 890,860
-        - Mean : 942.71
-        - Min : 4
-        - Max : 10532
-        - P1 : 4.00
-        - P25 : 152.00
-        - P50 (Median) : 576.00
-        - P75 : 1248.00
-        - P99 : 6686.72
-        ```
+    - Users in slice : 945
+    - Total triplets : 890,860
+    - Mean : 942.71
+    - Min : 4
+    - Max : 10532
+    - P1 : 4.00
+    - P25 : 152.00
+    - P50 (Median) : 576.00
+    - P75 : 1248.00
+    - P99 : 6686.72
+    ```
 
-        ![Triplets per User (for one slice of data)](data_preprocessing/images_log/image_4.png)
+    ![Triplets per User (for one slice of data)](data_preprocessing/images_log/image_4.png)
 
 ---
 
