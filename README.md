@@ -715,7 +715,7 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 - Then, we take the dot product between both matrices. Both matrices are huge, therefore we batch the multiplication per slices. The final result looks like the table below:
 
-| user_id/playlist_id | 1   | 2   | 3   | 4   | 5   |
+| song_id/playlist_id | 1   | 2   | 3   | 4   | 5   |
 | ------------------- | --- | --- | --- | --- | --- |
 | 1                   | 12  | 1   | 5   | 25  | 51  |
 | 2                   | 0   | 0   | 1   | 2   | 3   |
