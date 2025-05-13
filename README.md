@@ -726,11 +726,11 @@ Midway through preprocessing we decided to resize the data, and we kept working 
 
 | song_id/playlist_id | 1   | 2   | 3   | 4   | 5   |
 | ------------------- | --- | --- | --- | --- | --- |
-| 1                   | 12  | 1   | 5   | 25  | 51  |
-| 2                   | 0   | 0   | 1   | 2   | 3   |
-| 3                   | 12  | 2   | 5   | 25  | 51  |
-| 4                   | 62  | 4   | 5   | 42  | 24  |
-| 5                   | 131 | 3   | 5   | 24  | 8   |
+| 1                   | 1  | 1   | 0   | 0  | 1  |
+| 2                   | 0   | 0   | 1   | 0   | 1   |
+| 3                   | 1  | 1   | 0   | 0  | 0  |
+| 4                   | 1  | 0   | 0   | 0  | 0  |
+| 5                   | 1 | 0   | 0   | 1  | 0   |
 
 - Finally we grab this huge matrix and reshape it in a more friendly shape like the table below:
 
