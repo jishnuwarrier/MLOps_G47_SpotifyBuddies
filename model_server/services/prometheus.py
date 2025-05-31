@@ -11,7 +11,7 @@ INFERENCE_TIME = Histogram(
 INFERENCE_DIVERSITY = Histogram(
     "inference_diversity",
     "Diversity of Predictions",
-    buckets=[0, 1, 2, 5, 10, 20, 50, 100],
+    buckets=[0, 1, 2, 5, 10, 20, 50, 100, 1000, 10000, 100000, 10000000],
 )
 REDIS_TO_TIME = Histogram(
     "redis_io_time_seconds",
