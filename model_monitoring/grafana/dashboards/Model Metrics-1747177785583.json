@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": null,
   "links": [],
   "panels": [
     {
@@ -91,7 +91,7 @@
           "unit": "short"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
@@ -190,7 +190,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "editorMode": "code",
@@ -268,7 +268,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "median"
           ],
           "fields": "",
           "values": false
@@ -277,7 +277,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
@@ -298,8 +298,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "PABF2E7BD7AE7B0F4"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -315,7 +314,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 30000
               }
             ]
           }
@@ -346,7 +345,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "editorMode": "code",
@@ -361,8 +360,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "PABF2E7BD7AE7B0F4"
+        "type": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -398,7 +396,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -407,7 +405,7 @@
         "showThresholdMarkers": true,
         "sizing": "auto"
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "editorMode": "code",
@@ -498,14 +496,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(inference_time_seconds_bucket[5m]) / rate(inference_time_seconds_bucket[5m])",
+          "expr": "1000 * rate(inference_time_seconds_sum[30m]) / rate(inference_time_seconds_count[30m])",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -513,7 +511,7 @@
           "refId": "B"
         }
       ],
-      "title": "Average Inference Time",
+      "title": "Average Inference Time (30m)",
       "type": "timeseries"
     }
   ],
@@ -531,6 +529,5 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Model Metrics",
-  "uid": "cekj0ouny7dvkc",
   "version": 1
 }

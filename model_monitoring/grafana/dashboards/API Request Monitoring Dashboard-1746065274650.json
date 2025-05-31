@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": null,
   "links": [],
   "panels": [
     {
@@ -509,6 +509,5 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "API Request Monitoring Dashboard",
-  "uid": "aekiqfk5wiewwd",
-  "version": 3
+  "version": 1
 }
