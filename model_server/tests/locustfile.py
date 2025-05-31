@@ -10,7 +10,7 @@ class AppTest(HttpUser):
 
     @task
     def call_prediction(self):
-        data = np.random.randint(1, 10000, 50)
+        data = np.random.randint(1, 99999999, 1000)
         self.client.post(
             "api/playlist/recommend/", data=json.dumps({"user_ids": data.tolist()})
         )
