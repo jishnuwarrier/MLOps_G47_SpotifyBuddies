@@ -1,16 +1,43 @@
+import pickle
+import asyncio
+
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-import requests
+import aiohttp
 from datetime import datetime
+
+
+# Async function to send a single request
+async def send_request(session, url, user_batch):
+    try:
+        async with session.post(url, json={"user_ids": user_batch}) as response:
+            result = await response.json()
+            print("Inference result:", result)
+    except Exception as e:
+        print("Request failed:", e)
+
+
+# Async Function to send all the request
+async def send_all_requests(input_data):
+    tasks = []
+    url = "http://fastapi_server:80/api/playlist/recommend/"
+
+    input_list = sorted(input_data)
+    # Create 100 slices (each 100 users)
+    async with aiohttp.ClientSession() as session:
+        for i in range(0, len(input_list), 1000):
+            batch = input_list[i: i + 1000]
+            tasks.append(send_request(session, url, batch))
+
+        await asyncio.gather(*tasks)
 
 
 # Function to send inference request to FastAPI
 def send_inference_request():
-    url = "http://fastapi_server:80/api/playlist/recommend/"
-    data = {"user_ids": [0, 1, 2]}
-    response = requests.post(url, json=data)
-    result = response.json()
-    print("Inference result:", result)
+    with open("/mnt/object/inference_data/selected_user_ids.pkl", "rb") as f:
+        input_data = pickle.load(f)
+
+    asyncio.run(send_all_requests(input_data))
 
 
 # Define the Airflow DAG
@@ -20,7 +47,7 @@ dag = DAG(
         "owner": "airflow",
         "retries": 3,
     },
-    schedule_interval="@hourly",  # Adjust your scheduling as needed
+    schedule_interval="@daily",
     start_date=datetime(2025, 5, 5),
 )
 
