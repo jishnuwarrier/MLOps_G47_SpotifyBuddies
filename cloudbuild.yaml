@@ -1,0 +1,12 @@
+substitutions:
+  _REGION: us-central1
+  _AR_REPO: spotifybuddies-repo
+steps:
+- name: 'gcr.io/cloud-builders/docker'         # model-server
+  args: ['build','-t','${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/model-server:$SHORT_SHA','.']
+- name: 'gcr.io/cloud-builders/docker'         # client
+  dir: 'client_app_sample'
+  args: ['build','-t','${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/client:$SHORT_SHA','.']
+images:
+- '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/model-server:$SHORT_SHA'
+- '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/client:$SHORT_SHA'
