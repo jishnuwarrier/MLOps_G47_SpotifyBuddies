@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: fastapi
-          image: tiangolo/uvicorn-gunicorn-fastapi:python3.9
+          image: us-central1-docker.pkg.dev/spotifybuddies-464323/spotifybuddies-docker-repo/fastapi:latest
           ports:
             - containerPort: 8000
               name: http
