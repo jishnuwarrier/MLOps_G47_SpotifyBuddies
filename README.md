@@ -1161,32 +1161,3 @@ The jupyter notebook for adding environments, platforms and build.
 
 The command `ansible-playbook -i inventory.yml argocd/argocd_add_platform.yml` was run to add platforms, after which all the applications could be accessed.
 For example, MLFlow can be accessed using - [Link](http://129.114.25.50:8000/)
-
-## Error Description
-
-After completion of the kubernetes deployment using Ansible, I ran into running the ansible-playbook -i inventory.yml argocd/workflow_build_init.yml
-
-This triggered an Argo Workflow with two steps: a git-clone to fetch the repository and a Kaniko container build.
-
-While the Git clone step successfully cloned the repository into /mnt/workspace (as confirmed by the following output):
-
-![Error](./continuous_x_pipeline/images/dockerfile_error.png)
-
-the subsequent Kaniko step failed with the following error: error resolving dockerfile path: please provide a valid path to a Dockerfile within the build context with --dockerfile
-
-As seen in the output of the ls command the Dockerfile is in the root directory itself.
-The error was during the execution of the file [build-initial.yaml](https://github.com/AguLeon/MLOps_G47_SpotifyBuddies/tree/main/continuous_x_pipeline/workflows/build-initial.yaml) in line 56 despite trying with both absolute, and relative path.
-
-`- --dockerfile=/mnt/workspace/Dockerfile`
-
-`- --dockerfile=Dockerfile`
-
----
-
-While the Kubernetes infrastructure and ArgoCD integration were successfully set up, all three application environments—staging, canary, and production—failed during runtime due to missing container images. This is the reason that although the ansible notebook ran for each of the 3 environments, the deployment wasn't successful.
-
-![kubectl logs](./continuous_x_pipeline/images/kubectl_logs.png)
-
-As seen in the ArgoCD UI screenshot, the spotifybuddies-staging, spotifybuddies-canary, and spotifybuddies-production applications are in a "Degraded" state. Correspondingly, the kubectl get pods output confirms that each environment's FastAPI deployment pod is stuck in the ImagePullBackOff state, which indicates Kubernetes is continuously attempting, and failing, to pull the required container image.
-
-![argocd_degraded](./continuous_x_pipeline/images/argocd_degraded.png)
